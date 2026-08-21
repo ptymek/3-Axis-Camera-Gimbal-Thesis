@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<SimscapeMultibodyImportXML version="2.0" xmlns="urn:mathworks:SimscapeMultibody:import" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Created by="" on="11/04/18||15:57:47" using="Simscape Multibody Link Version 6.0" from="SolidWorks 24.2.0"/>
+<ModelUnits mass="kilogram" length="meter"/>
+<DataUnits mass="kilogram" length="meter"/>
+<RootAssembly name="gimbal" uid="gimbal" version="189">
+<AssemblyFile name="gimbal.SLDASM" type="SolidWorks Assembly"/>
+<InstanceTree>
+<Instance name="yaw_motor_1_rotor-1" uid="yaw_motor_1_rotor-1" entityUid="yaw_motor_1_rotor*:*Domyślna">
+<Transform>
+<Rotation>-0.99628825799632337 0.086079654847423109 0 0 0 -1 -0.086079654847423109 -0.99628825799632337 0</Rotation>
+<Translation>-0.034004873152256546 -0.0034999999999999992 0.0042278729781197915</Translation>
+</Transform>
+</Instance>
+<Instance name="yaw_part_2-1" uid="yaw_part_2-1" entityUid="yaw_part_2*:*Domyślna">
+<Transform>
+<Rotation>0.99999993875020521 1.87003089261829e-16 -0.00034999940852329867 1.8661047820511462e-16 -1 -1.1217804287855192e-15 -0.00034999940852329867 1.1217150465197022e-15 -0.99999993875020521</Rotation>
+<Translation>-0.034265373119199929 -0.016000000000000073 -0.02577203768453435</Translation>
+</Transform>
+</Instance>
+<Instance name="roll_part_1-1" uid="roll_part_1-1" entityUid="roll_part_1*:*Domyślna">
+<Transform>
+<Rotation>-0.00016786421382327288 -0.99999992466100707 0.00034999940852434595 0.99999998591080108 -0.00016786422410490701 1.1106626347247815e-15 5.8752378038442184e-08 0.00034999940359313491 0.99999993875020543</Rotation>
+<Translation>0.0012374242015342149 -0.05249404082004426 -0.017784463153360162</Translation>
+</Transform>
+</Instance>
+<Instance name="yaw_motor_1_stator-1" uid="yaw_motor_1_stator-1" entityUid="yaw_motor_1_stator*:*Domyślna">
+<Transform>
+<Rotation>0.99999971568071322 -0.00075408122403724392 0 0 0 0.99999999999999989 -0.00075408122403722202 -0.99999971568071322 0</Rotation>
+<Translation>-0.034004873152256546 -0.0029999999999999996 0.0042278729781197915</Translation>
+</Transform>
+</Instance>
+<Instance name="roll_motor_rotor-1" uid="roll_motor_rotor-1" entityUid="roll_motor_rotor*:*Domyślna">
+<Transform>
+<Rotation>0.91019883786245426 0.41417140540391212 -0.00034999940852339017 0.41417143077182739 -0.91019889361194972 -1.1901588391190704e-15 -0.0003185690744033228 -0.00014495975579633768 -0.99999993875020532</Rotation>
+<Translation>-0.034264148121270099 -0.052500000000000033 -0.022272037898908532</Translation>
+</Transform>
+</Instance>
+<Instance name="pitch_motor_rotor-2" uid="pitch_motor_rotor-2" entityUid="pitch_motor_rotor*:*Domyślna">
+<Transform>
+<Rotation>6.0379244095842794e-05 -0.00038344794579262589 -0.99999992466100707 0.82341851099893781 0.56743451390085065 -0.00016786422410519845 0.56743453551809753 -0.82341843882790133 0.00034999940359338867</Rotation>
+<Translation>0.0067510737641022283 -0.052493117566811617 0.021213609461178215</Translation>
+</Transform>
+</Instance>
+<Instance name="yaw_part_1-1" uid="yaw_part_1-1" entityUid="yaw_part_1*:*Domyślna">
+<Transform>
+<Rotation>0.99999993875020521 0.00034999940852452338 1.9943565717828343e-16 1.9904930067727533e-16 1.1039124162117943e-15 -0.99999999999999989 -0.00034999940852452338 0.99999993875020521 1.1038426814598811e-15</Rotation>
+<Translation>-0.034016773132146405 -0.01350000000000004 -0.029772124939387277</Translation>
+</Transform>
+</Instance>
+<Instance name="roll_motor_stator-3" uid="roll_motor_stator-3" entityUid="roll_motor_stator*:*Domyślna">
+<Transform>
+<Rotation>-0.011563778586190305 0.99993307602320258 0.00034999940852320109 -0.99993313726890198 -0.011563779294469409 1.1204988495368777e-15 4.047315914477714e-06 -0.00034997600660685493 0.99999993875020543</Rotation>
+<Translation>-0.034263973121565844 -0.05250000000000004 -0.021772037929533444</Translation>
+</Transform>
+</Instance>
+<Instance name="pitch_motor_stator-2" uid="pitch_motor_stator-2" entityUid="pitch_motor_stator*:*Domyślna">
+<Transform>
+<Rotation>6.0379244095797725e-05 -0.00038344794579299284 -0.99999992466100696 0.82341851099893737 0.5674345139008512 -0.00016786422410544651 0.56743453551809808 -0.82341843882790089 0.00034999940359366964</Rotation>
+<Translation>-0.0042489254071688722 -0.052494964073276834 0.021217459454617726</Translation>
+</Transform>
+</Instance>
+<Instance name="camera_mount_2-1" uid="camera_mount_2-1" entityUid="camera_mount_2*:*Domyślna">
+<Transform>
+<Rotation>0.00035143271143519569 -0.99999992466100707 0.00016484243866274247 -0.0086158559111386163 -0.00016786422410535991 -0.99996286873489493 0.99996282106984746 0.00034999940359446192 -0.0086159142550081384</Rotation>
+<Translation>-0.010745669279301474 -0.072245321848248001 0.021049570144204693</Translation>
+</Transform>
+</Instance>
+<Instance name="roll_part_2-1" uid="roll_part_2-1" entityUid="roll_part_2*:*Domyślna">
+<Transform>
+<Rotation>-0.00016786421382371697 0.00034999940852394745 0.99999992466100707 0.99999998591080108 1.0014449359563912e-15 0.00016786422410536325 5.8752378147756868e-08 0.99999993875020521 -0.00034999940359273641</Rotation>
+<Translation>-0.0027617004985884927 -0.052494712276940719 -0.01528306330887026</Translation>
+</Transform>
+</Instance>
+<Instance name="camera_mount_1-1" uid="camera_mount_1-1" entityUid="camera_mount_1*:*Domyślna">
+<Transform>
+<Rotation>0.00035143271143497928 -0.00016484243866283024 -0.99999992466100696 -0.0086158559111386476 0.99996286873489493 -0.00016786422410544583 0.99996282106984746 0.0086159142550081714 0.0003499994035942447</Rotation>
+<Translation>-0.0082450100978946842 -0.076244753662627021 0.021014231488675709</Translation>
+</Transform>
+</Instance>
+</InstanceTree>
+<Constraints>
+<Coincident name="Wspólnie1">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>camera_mount_2-1</Uid>
+</InstancePath>
+<Position>-0.012500000000000001 0 0.0039999999999999897</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>camera_mount_1-1</Uid>
+</InstancePath>
+<Position>0 0.02375 0.0024999999999999988</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie2">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>camera_mount_2-1</Uid>
+</InstancePath>
+<Position>-0.0074999999999999997 0.059000000000000011 0.0039999999999999897</Position>
+<Axis>0 0 1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>camera_mount_1-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.0024999999999999988</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie3">
+<ConstraintGeometry geomType="line">
+<InstancePath>
+<Uid>camera_mount_2-1</Uid>
+</InstancePath>
+<Position>0.012499999999999997 0 0.0039999999999999897</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="line">
+<InstancePath>
+<Uid>camera_mount_1-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.0024999999999999988</Position>
+<Axis>0 1 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Koncentryczne1">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999998 0.0040000000000000001</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>camera_mount_1-1</Uid>
+</InstancePath>
+<Position>0 0.02375 0.0024999999999999988</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Wspólnie4">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.004000000000000001</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.035500000000000011 0.0025000000000000022</Position>
+<Axis>0 0 1.0000000000000004</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie5">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999998 0.0040000000000000001</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_1-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.0025000000000000022</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie6">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.004000000000000001</Position>
+<Axis>1.0000000000000002 0 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_1-1</Uid>
+</InstancePath>
+<Position>0.012500000000000004 0 0.0025000000000000022</Position>
+<Axis>1.0000000000000002 2.3159152476359022e-16 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Koncentryczne2">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.035500000000000011 0.0025000000000000022</Position>
+<Axis>0 0 -1.0000000000000004</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999991 0.0040000000000000036</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Wspólnie7">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999991 0.0040000000000000036</Position>
+<Axis>0 0 1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_1-1</Uid>
+</InstancePath>
+<Position>-0.012499999999999997 0 0.0024999999999999988</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie8">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0.012750000000000001 0 0.0040000000000000036</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.033999999999999989 0.0024999999999999953</Position>
+<Axis>0 0 0.99999999999999989</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie9">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0.012750000000000001 0 0.0040000000000000036</Position>
+<Axis>1.0000000000000002 0 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_1-1</Uid>
+</InstancePath>
+<Position>0.012500000000000001 0.033999999999999989 0.0024999999999999988</Position>
+<Axis>1.0000000000000002 -1.5308934675495323e-16 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Koncentryczne3">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_motor_1_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.01</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_motor_1_stator-1</Uid>
+</InstancePath>
+<Position>0 0 0.0029999999999999992</Position>
+<Axis>0 0 -0.99999999999999989</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Distance name="Odległość1">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_motor_1_stator-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -0.99999999999999989</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_motor_1_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Distance>
+<Concentric name="Koncentryczne4">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.033999999999999989 0.0024999999999999953</Position>
+<Axis>0 0 -0.99999999999999989</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_motor_1_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.01</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Wspólnie11">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.033999999999999989 0</Position>
+<Axis>0 0 -0.99999999999999989</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_motor_1_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.01</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Koncentryczne5">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999991 0.0040000000000000036</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_motor_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000009</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Distance name="Odległość2">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_motor_stator-3</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_motor_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+</Distance>
+<Concentric name="Koncentryczne6">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_motor_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000009</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_motor_stator-3</Uid>
+</InstancePath>
+<Position>0 0 0.0040000000000000036</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Concentric name="Koncentryczne7">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999998 0.0040000000000000001</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>pitch_motor_rotor-2</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000001</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Distance name="Odległość3">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>pitch_motor_stator-2</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>pitch_motor_rotor-2</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000001</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Distance>
+<Concentric name="Koncentryczne8">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>pitch_motor_rotor-2</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000001</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>pitch_motor_stator-2</Uid>
+</InstancePath>
+<Position>0 0 0.0040000000000000001</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Wspólnie14">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>camera_mount_1-1</Uid>
+</InstancePath>
+<Position>0 0.02375 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>pitch_motor_stator-2</Uid>
+</InstancePath>
+<Position>0 0 0.0040000000000000001</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Coincident name="Wspólnie15">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_1-1</Uid>
+</InstancePath>
+<Position>0 0.035500000000000011 0</Position>
+<Axis>0 0 -1.0000000000000004</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_motor_stator-3</Uid>
+</InstancePath>
+<Position>0 0 0.0040000000000000036</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Distance name="Odległość4">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999991 0.0040000000000000036</Position>
+<Axis>0 0 1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_motor_rotor-1</Uid>
+</InstancePath>
+<Position>0 0 0.010500000000000009</Position>
+<Axis>0 0 1.0000000000000002</Axis>
+</ConstraintGeometry>
+</Distance>
+<Distance name="Odległość5">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>pitch_motor_rotor-2</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>roll_part_2-1</Uid>
+</InstancePath>
+<Position>0 0.036499999999999998 0.0040000000000000001</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Distance>
+<Coincident name="Wspólnie16">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>yaw_motor_1_stator-1</Uid>
+</InstancePath>
+<Position>0 0 0.0029999999999999992</Position>
+<Axis>0 0 0.99999999999999989</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>gimbal</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 1 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+</Constraints>
+</RootAssembly>
+<Assemblies>
+</Assemblies>
+<Parts>
+<Part name="camera_mount_1" uid="camera_mount_1*:*Domyślna" version="111">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="camera_mount_1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0016028982473021837</Mass>
+<CenterOfMass>0 0.017836712332830258 0.0012500000000000002</CenterOfMass>
+<Inertia>1.7760270660354051e-07 7.653499812769683e-08 2.5246801905696418e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="camera_mount_1_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="camera_mount_2" uid="camera_mount_2*:*Domyślna" version="106">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="camera_mount_2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.003873650459150643</Mass>
+<CenterOfMass>0 0.032072526832842167 0.002</CenterOfMass>
+<Inertia>1.6823296993444665e-06 2.6333688104453269e-07 1.9353368458312638e-06 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="camera_mount_2_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="pitch_motor_rotor" uid="pitch_motor_rotor*:*Domyślna" version="120">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="pitch_motor_rotor.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0064653976810877924</Mass>
+<CenterOfMass>0 0 0.0052500000000000012</CenterOfMass>
+<Inertia>3.7620532756829595e-07 3.7620532756829584e-07 6.3360897274660374e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="pitch_motor_rotor_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="pitch_motor_stator" uid="pitch_motor_stator*:*Domyślna" version="123">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="pitch_motor_stator.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0024630086404143973</Mass>
+<CenterOfMass>0 0 0.0020000000000000005</CenterOfMass>
+<Inertia>1.2397143490085803e-07 1.23971434900858e-07 2.4137484676061097e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="pitch_motor_stator_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="roll_motor_rotor" uid="roll_motor_rotor*:*Domyślna" version="120">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="roll_motor_rotor.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0064653976810877924</Mass>
+<CenterOfMass>0 0 0.0052500000000000012</CenterOfMass>
+<Inertia>3.7620532756829595e-07 3.7620532756829584e-07 6.3360897274660374e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="roll_motor_rotor_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="roll_motor_stator" uid="roll_motor_stator*:*Domyślna" version="123">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="roll_motor_stator.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0024630086404143973</Mass>
+<CenterOfMass>0 0 0.0020000000000000005</CenterOfMass>
+<Inertia>1.2397143490085803e-07 1.23971434900858e-07 2.4137484676061097e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="roll_motor_stator_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="roll_part_1" uid="roll_part_1*:*Domyślna" version="108">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="roll_part_1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0017910162125603058</Mass>
+<CenterOfMass>0 0.024145799607708206 0.0012499999999999998</CenterOfMass>
+<Inertia>3.9112089111361896e-07 8.9038852329601232e-08 4.7829410155513653e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="roll_part_1_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="roll_part_2" uid="roll_part_2*:*Domyślna" version="107">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="roll_part_2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0019188015734983991</Mass>
+<CenterOfMass>-4.1534044127053918e-05 0.017807040728889698 0.002</CenterOfMass>
+<Inertia>4.1239262741777661e-07 1.3630684098794925e-07 5.435826642097301e-07 0 0 -2.7950100399973551e-09</Inertia>
+</MassProperties>
+<GeometryFile name="roll_part_2_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="yaw_motor_1_rotor" uid="yaw_motor_1_rotor*:*Domyślna" version="105">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="yaw_motor_1_rotor.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.009079202768874502</Mass>
+<CenterOfMass>0 0 0.0050000000000000001</CenterOfMass>
+<Inertia>7.3163242312513704e-07 7.3163242312513704e-07 1.3119448001023658e-06 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="yaw_motor_1_rotor_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="yaw_motor_1_stator" uid="yaw_motor_1_stator*:*Domyślna" version="113">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="yaw_motor_1_stator.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.002723760830662351</Mass>
+<CenterOfMass>0 0 0.0015</CenterOfMass>
+<Inertia>1.9883454063835168e-07 1.9883454063835168e-07 3.9358344003070981e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="yaw_motor_1_stator_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="yaw_part_1" uid="yaw_part_1*:*Domyślna" version="106">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="yaw_part_1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0019544109212330982</Mass>
+<CenterOfMass>0 0.023972694954701192 0.00125</CenterOfMass>
+<Inertia>3.7586574298498772e-07 1.0225738127341963e-07 4.7608727954878947e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="yaw_part_1_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="yaw_part_2" uid="yaw_part_2*:*Domyślna" version="108">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="yaw_part_2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0020253226052448707</Mass>
+<CenterOfMass>-8.377358683768283e-05 0.01760023524271619 0.0019999999999999996</CenterOfMass>
+<Inertia>4.1791086811503521e-07 1.4368763962505353e-07 5.5619764745943565e-07 0 0 -3.4394850439133583e-09</Inertia>
+</MassProperties>
+<GeometryFile name="yaw_part_2_Domyślna_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+</Parts>
+</SimscapeMultibodyImportXML>

@@ -9,7 +9,7 @@
 > **Master's Thesis Project (*Praca Magisterska*)**  
 > **Title:** *Zaawansowane algorytmy sterowania 3-osiowym stabilizatorem do kamer*  
 > (*Advanced Control Algorithms for a 3-Axis Camera Stabilizer*)  
-> **Author:** Paweł Tymiński, M.Sc. Eng. (*inż. Paweł  Tymiński*)  
+> **Author:** Paweł Tymiński, M.Sc. Eng. (*inż. Paweł Tymiński*)  
 > **Academic Supervisor:** Prof. Maciej Ławryńczuk, D.Sc. Eng. (*dr hab. inż. Maciej Ławryńczuk, prof. PW*)  
 > **Institution:** Warsaw University of Technology, Faculty of Electronics and Information Technology (WEiTI), Institute of Control and Computation Engineering (IAIIS)  
 
@@ -46,7 +46,7 @@
 
 ## 🌟 Executive Summary
 
-A **3-axis camera gimbal** is an active stabilization mechanism designed to isolate a camera payload from external rotational disturbances (angular jitter, vehicle vibration, operator body movements) while accurately maintaining or adjusting a target viewing orientation in space across three orthogonal axes: **Yaw** ($\psi$), **Pitch** ($	heta$), and **Roll** ($\phi$).
+A **3-axis camera gimbal** is an active stabilization mechanism designed to isolate a camera payload from external rotational disturbances (angular jitter, vehicle vibration, operator body movements) while accurately maintaining or adjusting a target viewing orientation in space across three orthogonal axes: **Yaw** ($\psi$), **Pitch** ($\theta$), and **Roll** ($\phi$).
 
 While classical **Proportional-Integral-Derivative (PID)** control remains the ubiquitous industrial standard in commercial camera stabilizers (e.g., DJI Ronin, Zhiyun Crane, BaseCam SimpleBGC), it struggles during aggressive disturbances due to:
 1. **Strong cross-axis dynamic and kinematic coupling** between structural links.
@@ -77,7 +77,7 @@ Testy przeprowadzono na **10 rzeczywistych zbiorach zakłóceń** zarejestrowany
 
 ## 🚀 Key Features & Highlights
 
-- 📐 **Rigorous Kinematic & Dynamic Modeling:** Full Euler-Lagrange multi-body dynamics ($D(q)\ddot{q} + C(q,\dot{q})\dot{q} + G(q) = 	au$) and ZYX rotation matrices.
+- 📐 **Rigorous Kinematic & Dynamic Modeling:** Full Euler-Lagrange multi-body dynamics ($D(q)\ddot{q} + C(q,\dot{q})\dot{q} + G(q) = \tau$) and ZYX rotation matrices.
 - ⚡ **Actuator Dynamic Realism:** Dual-inertia 2nd-order BLDC motor approximation based on the datasheet of the **T-Motor GB3510** direct-drive gimbal motor, featuring rate limiter and positional bounds.
 - 📱 **Real-World Empirical Dataset:** 10 real sensor recordings collected via smartphone telemetry (MATLAB Mobile @ 100 Hz) covering walking, sprinting, stair climbing, rough vehicle rides, and boat oscillations.
 - 🧪 **6 Control Architectures Tested:** Classical PID, Non-linear PID, LQG / Kalman Filter, Multivariable MPC, Neural NARMA-L2, and Neural Model Reference Control (MRC).
@@ -90,30 +90,30 @@ Testy przeprowadzono na **10 rzeczywistych zbiorach zakłóceń** zarejestrowany
 
 ```mermaid
 graph TD
-    subgraph Disturbance Input
-        D[Real Disturbance Data<br/>Yaw_d, Pitch_d, Roll_d<br/>MATLAB Mobile @ 100Hz]
+    subgraph Disturbance_Input ["Disturbance Input"]
+        D["Real Disturbance Data<br/>Yaw_d, Pitch_d, Roll_d<br/>(MATLAB Mobile @ 100Hz)"]
     end
 
-    subgraph Reference Input
-        R[Target Orientation<br/>Yaw_ref, Pitch_ref, Roll_ref]
+    subgraph Reference_Input ["Reference Input"]
+        R["Target Orientation<br/>Yaw_ref, Pitch_ref, Roll_ref"]
     end
 
-    subgraph Kinematic Solver
-        FK[Forward Kinematics<br/>Camera Global Orientation]
-        IK[Inverse Kinematics<br/>Local Motor Target Calculation]
+    subgraph Kinematic_Solver ["Kinematic Solver"]
+        FK["Forward Kinematics<br/>Camera Global Orientation"]
+        IK["Inverse Kinematics<br/>Local Motor Target Calculation"]
     end
 
-    subgraph Controller Block
-        CTRL[Active Controller<br/>PID / NL-PID / LQG / MPC / NN]
+    subgraph Controller_Block ["Controller Block"]
+        CTRL["Active Controller<br/>PID / NL-PID / LQG / MPC / NN"]
     end
 
-    subgraph Actuators & Plant Dynamics
-        MOT[3x BLDC Motor Dynamics<br/>Dual-Inertia Model + Saturation]
-        PLANT[Euler-Lagrange Gimbal Dynamics<br/>D(q)q'' + C(q,q')q' + G(q) = Tau]
+    subgraph Actuators_Plant ["Actuators & Plant Dynamics"]
+        MOT["3x BLDC Motor Dynamics<br/>Dual-Inertia Model + Saturation"]
+        PLANT["Euler-Lagrange Gimbal Dynamics<br/>D(q)q'' + C(q,q')q' + G(q) = &tau;"]
     end
 
-    subgraph Sensor Fusion
-        IMU[IMU / Gyroscope Model<br/>Local & Global Coordinate Feedback]
+    subgraph Sensor_Fusion ["Sensor Fusion"]
+        IMU["IMU / Gyroscope Model<br/>Local & Global Coordinate Feedback"]
     end
 
     R --> IK
@@ -132,19 +132,21 @@ graph TD
 The gimbal is structured as an open kinematic chain with 3 rotational degrees of freedom:
 - **Joint 1 (Yaw - $\psi$):** Base rotation around the global vertical $Z$-axis.
 - **Joint 2 (Roll - $\phi$):** Middle arm rotation around the intermediate longitudinal $X$-axis.
-- **Joint 3 (Pitch - $	heta$):** Camera cradle rotation around the lateral $Y$-axis.
+- **Joint 3 (Pitch - $\theta$):** Camera cradle rotation around the lateral $Y$-axis.
 
 The transformation matrix from the inertial base frame to the camera effector coordinate system is expressed using homogeneous Euler rotation matrices:
 
-$$R_{base}^{cam} = R_z(\psi) R_x(\phi) R_y(	heta)$$
+$$R_{base}^{cam} = R_z(\psi) R_x(\phi) R_y(\theta)$$
 
-$$egin{bmatrix}
-\cos\psi \cos	heta - \sin\psi \sin\phi \sin	heta & -\sin\psi \cos\phi & \cos\psi \sin	heta + \sin\psi \sin\phi \cos	heta \
-\sin\psi \cos	heta + \cos\psi \sin\phi \sin	heta & \cos\psi \cos\phi & \sin\psi \sin	heta - \cos\psi \sin\phi \cos	heta \
--\cos\phi \sin	heta & \sin\phi & \cos\phi \cos	heta
-\end{bmatrix}$$
+$$
+\begin{bmatrix}
+\cos\psi \cos\theta - \sin\psi \sin\phi \sin\theta & -\sin\psi \cos\phi & \cos\psi \sin\theta + \sin\psi \sin\phi \cos\theta \\
+\sin\psi \cos\theta + \cos\psi \sin\phi \sin\theta & \cos\psi \cos\phi & \sin\psi \sin\theta - \cos\psi \sin\phi \cos\theta \\
+-\cos\phi \sin\theta & \sin\phi & \cos\phi \cos\theta
+\end{bmatrix}
+$$
 
-Using direct and inverse kinematics, target motor angles $(\psi_m, 	heta_m, \phi_m)$ are continuously computed to cancel out the base disturbance $(\psi_d, 	heta_d, \phi_d)$ such that the global camera orientation tracks the desired reference.
+Using direct and inverse kinematics, target motor angles $(\psi_m, \theta_m, \phi_m)$ are continuously computed to cancel out the base disturbance $(\psi_d, \theta_d, \phi_d)$ such that the global camera orientation tracks the desired reference.
 
 ---
 
@@ -154,18 +156,18 @@ The equations of motion are derived using the **Euler-Lagrange method**:
 
 $$L = E_k - E_p$$
 
-$$rac{d}{dt}\left(rac{\partial L}{\partial \dot{q}_i}ight) - rac{\partial L}{\partial q_i} = Q_i, \quad i \in \{1, 2, 3\}$$
+$$\frac{d}{dt}\left(\frac{\partial L}{\partial \dot{q}_i}\right) - \frac{\partial L}{\partial q_i} = Q_i, \quad i \in \{1, 2, 3\}$$
 
 Yielding the standard matrix equation of robot dynamics:
 
-$$D(q)\ddot{q} + C(q, \dot{q})\dot{q} + G(q) = 	au$$
+$$D(q)\ddot{q} + C(q, \dot{q})\dot{q} + G(q) = \tau$$
 
 Where:
-- $q = [\psi, 	heta, \phi]^T$ represents generalized coordinates.
-- $D(q) \in \mathbb{R}^{3	imes 3}$ is the positive-definite symmetric **inertia/mass matrix** computed from the mass distribution and inertia tensors of each link (`calculate_D_matrix.m`, `calculate_I_matrix.m`).
+- $q = [\psi, \theta, \phi]^T$ represents generalized coordinates.
+- $D(q) \in \mathbb{R}^{3 \times 3}$ is the positive-definite symmetric **inertia/mass matrix** computed from the mass distribution and inertia tensors of each link (`calculate_D_matrix.m`, `calculate_I_matrix.m`).
 - $C(q, \dot{q})\dot{q} \in \mathbb{R}^3$ represents **Coriolis and centrifugal forces** (`calculate_H_matrix.m`).
 - $G(q) \in \mathbb{R}^3$ is the **gravitational torque vector** (`calculate_G_matrix.m`).
-- $	au = [	au_{yaw}, 	au_{pitch}, 	au_{roll}]^T$ is the vector of control torques generated by the BLDC motors.
+- $\tau = [\tau_{yaw}, \tau_{pitch}, \tau_{roll}]^T$ is the vector of control torques generated by the BLDC motors.
 
 ---
 
@@ -173,11 +175,11 @@ Where:
 
 Commercial direct-drive gimbals utilize high-pole-count Brushless DC (BLDC) motors driven via Space Vector Modulation (SVM) and Field-Oriented Control (FOC). To balance simulation fidelity with computational tractability, each motor is modeled as a 2nd-order dual-inertia dynamic block:
 
-$$G_m(s) = rac{	heta_{out}(s)}{	heta_{cmd}(s)} = rac{1}{(T_1 s + 1)(T_2 s + 1)}$$
+$$G_m(s) = \frac{\theta_{out}(s)}{\theta_{cmd}(s)} = \frac{1}{(T_1 s + 1)(T_2 s + 1)}$$
 
 Parameters configured from the **T-Motor GB3510** motor datasheet:
-- **Nominal Operating Speed:** $\omega_{nom} = 300	ext{ RPM} = 31.42	ext{ rad/s}$
-- **Time Constants:** $T_1 = 0.05	ext{ s}, T_2 = 0.02	ext{ s}$
+- **Nominal Operating Speed:** $\omega_{nom} = 300\text{ RPM} = 31.42\text{ rad/s}$
+- **Time Constants:** $T_1 = 0.05\text{ s}, \quad T_2 = 0.02\text{ s}$
 - **Angular Velocity Saturation:** Non-linear rate limiter restricting max shaft acceleration and velocity.
 - **Current / Power Model:** Electrical current consumption $I(t)$ calculated dynamically to evaluate energy efficiency in mAh.
 
@@ -187,7 +189,7 @@ Parameters configured from the **T-Motor GB3510** motor datasheet:
 
 The stabilizer integrates an Inertial Measurement Unit (IMU) positioned on the camera cradle. Sensor fusion transforms measured angular velocities $\omega = [\omega_x, \omega_y, \omega_z]^T$ and linear accelerations into Euler angles through Jacobian transformations:
 
-$$egin{bmatrix} \dot{\psi} \ \dot{	heta} \ \dot{\phi} \end{bmatrix} = J(q)^{-1} egin{bmatrix} \omega_x \ \omega_y \ \omega_z \end{bmatrix}$$
+$$\begin{bmatrix} \dot{\psi} \\ \dot{\theta} \\ \dot{\phi} \end{bmatrix} = J(q)^{-1} \begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}$$
 
 The model incorporates realistic sensor characteristics, including gyro drift, quantization resolution, and high-frequency disturbance rejection.
 
@@ -195,33 +197,36 @@ The model incorporates realistic sensor characteristics, including gyro drift, q
 
 ## 🧠 Evaluated Control Algorithms
 
-```
-                               ┌────────────────────────────────┐
-                               │     Active Controllers        │
-                               └────────────────────────────────┘
-                                                │
-         ┌──────────────┬───────────────┼───────────────┬──────────────┬──────────────┐
-         ▼              ▼               ▼               ▼              ▼              ▼
-    ┌─────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐  ┌───────────┐
-    │ Classical│   │Non-Linear │   │   LQG /   │   │ Model     │   │Neural Net │  │Neural Net │
-    │   PID   │   │   PID     │   │  Kalman   │   │Predictive │   │ NARMA-L2  │  │   MRC     │
-    └─────────┘   └───────────┘   └───────────┘   └───────────┘   └───────────┘  └───────────┘
+```mermaid
+graph TD
+    classDef main fill:#1e293b,stroke:#475569,stroke-width:2px,color:#f8fafc;
+    classDef classic fill:#0369a1,stroke:#0284c7,stroke-width:2px,color:#f8fafc;
+    classDef opt fill:#047857,stroke:#059669,stroke-width:2px,color:#f8fafc;
+    classDef neural fill:#6d28d9,stroke:#7c3aed,stroke-width:2px,color:#f8fafc;
+
+    AC["Active Control Architectures"]:::main
+    AC --> C1["1. Classical PID<br/>(Baseline)"]:::classic
+    AC --> C2["2. Non-Linear PID<br/>(NL-PID)"]:::classic
+    AC --> C3["3. LQG Regulator<br/>(LQR + Kalman Filter)"]:::opt
+    AC --> C4["4. Model Predictive Control<br/>(MPC)"]:::opt
+    AC --> C5["5. Neural Network<br/>(NARMA-L2)"]:::neural
+    AC --> C6["6. Neural Network MRC<br/>(Model Reference)"]:::neural
 ```
 
 ### 1. Classical PID Controller (Baseline)
 Standard industrial three-term controller operating independently on each axis:
-$$u(t) = K_p e(t) + K_i \int_0^t e(	au)d	au + K_d rac{de(t)}{dt}$$
+$$u(t) = K_p e(t) + K_i \int_0^t e(\tau) \, d\tau + K_d \frac{de(t)}{dt}$$
 - **Pros:** Low computational footprint, intuitive heuristic tuning.
 - **Cons:** Saturated by rapid disturbances, high MSE during abrupt multi-axis motions.
 
 ### 2. Non-Linear PID (NL-PID)
 Implements error-dependent gain scheduling with non-linear mapping:
-$$u(t) = K_p \cdot f(e, lpha_p) + K_i \int_0^t f(e, lpha_i) d	au + K_d \cdot f(\dot{e}, lpha_d)$$
-Where $f(e, lpha) = |e|^lpha \cdot 	ext{sgn}(e)$. For $|e| > 1$, proportional action increases sharply to rapidly reduce error, whereas for small errors it prevents oscillations.
+$$u(t) = K_p \cdot f(e, \alpha_p) + K_i \int_0^t f(e, \alpha_i) \, d\tau + K_d \cdot f(\dot{e}, \alpha_d)$$
+Where $f(e, \alpha) = |e|^\alpha \cdot \text{sgn}(e)$. For $|e| > 1$, proportional action increases sharply to rapidly reduce error, whereas for small errors it prevents oscillations.
 
 ### 3. Linear-Quadratic-Gaussian (LQG) Regulator
 Optimal state-feedback controller combining **Linear Quadratic Regulator (LQR)** and a **Steady-State Kalman Filter** state estimator:
-$$J = \int_0^\infty \left( x(t)^T Q x(t) + u(t)^T R u(t) ight) dt$$
+$$J = \int_0^\infty \left( x(t)^T Q x(t) + u(t)^T R u(t) \right) dt$$
 - Generates optimal state feedback gain $K = R^{-1} B^T P$ (solving Algebraic Riccati Equation).
 - Kalman filter reconstructs full state vector $\hat{x} = [\hat{q}, \hat{\dot{q}}]^T$ from noisy position observations.
 
@@ -267,16 +272,16 @@ Disturbance profiles were collected at **100 Hz** using the **MATLAB Mobile** se
 ## 📏 Evaluation Criteria & Metrics
 
 1. **Tracking Error (Mean Squared Error - MSE):**
-   $$MSE = rac{1}{N} \sum_{k=1}^N \left( q_{ref}(k) - q_{actual}(k) ight)^2 \quad [	ext{deg}^2]$$
-   Evaluated independently for **Yaw ($MSE_\psi$)**, **Pitch ($MSE_	heta$)**, and **Roll ($MSE_\phi$)**.
+   $$MSE = \frac{1}{N} \sum_{k=1}^N \left( q_{ref}(k) - q_{actual}(k) \right)^2 \quad [\text{deg}^2]$$
+   Evaluated independently for **Yaw ($MSE_\psi$)**, **Pitch ($MSE_\theta$)**, and **Roll ($MSE_\phi$)**.
 
 2. **Energy Consumption ($E$):**
-   $$E = rac{1}{3600} \int_0^T \sum_{i=1}^3 |I_i(t)| \, dt \quad [	ext{mAh}]$$
+   $$E = \frac{1}{3600} \int_0^T \sum_{i=1}^3 |I_i(t)| \, dt \quad [\text{mAh}]$$
    Measures total battery discharge consumed by all three BLDC motor drives.
 
 3. **Multi-Criteria Weighted Performance Index:**
-   $$	ext{Score} = w_E \cdot E_{norm} + w_{\psi} \cdot MSE_{\psi, norm} + w_{	heta} \cdot MSE_{	heta, norm} + w_{\phi} \cdot MSE_{\phi, norm}$$
-   *(Weights: $w_E = 0.6$, $w_\psi = 0.6$, $w_	heta = 0.5$, $w_\phi = 0.2$)*
+   $$\text{Score} = w_E \cdot E_{norm} + w_{\psi} \cdot MSE_{\psi, norm} + w_{\theta} \cdot MSE_{\theta, norm} + w_{\phi} \cdot MSE_{\phi, norm}$$
+   *(Weights: $w_E = 0.6$, $w_\psi = 0.6$, $w_\theta = 0.5$, $w_\phi = 0.2$)*
 
 ---
 
@@ -299,7 +304,7 @@ Below is the aggregate performance summary compiled across all **60 simulation r
 
 ### 🎯 Mean Squared Error (MSE) Comparison
 
-| Controller | Average Yaw MSE $[	ext{deg}^2]$ | Average Pitch MSE $[	ext{deg}^2]$ | Average Roll MSE $[	ext{deg}^2]$ | **Weighted Final Score** | **Rank** |
+| Controller | Average Yaw MSE $[\text{deg}^2]$ | Average Pitch MSE $[\text{deg}^2]$ | Average Roll MSE $[\text{deg}^2]$ | **Weighted Final Score** | **Rank** |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **LQG** | **0.0314** 🏆 | **0.0236** 🏆 | 349.52 | **101.73** | 🥇 **1st Place** |
 | **NN MRC** | 0.4122 | 0.4281 | 349.62 | **102.94** | 🥈 **2nd Place** |
@@ -326,11 +331,11 @@ Below is the aggregate performance summary compiled across all **60 simulation r
 ## 🔍 Key Findings & Scientific Insights
 
 1. **Superiority of Optimal & Predictive Control:**  
-   Both **LQG** and **MPC** outperform classical PID by over **46% in overall trajectory tracking fidelity**, especially on the highly coupled Roll axis ($347.64	ext{ deg}^2$ vs $652.77	ext{ deg}^2$).
+   Both **LQG** and **MPC** outperform classical PID by over **46% in overall trajectory tracking fidelity**, especially on the highly coupled Roll axis ($347.64\text{ deg}^2$ vs $652.77\text{ deg}^2$).
 2. **The Actuator Velocity Saturation Bottleneck:**  
    When external rotational disturbances exceed the physical maximum velocity of the BLDC motor ($\omega_{max}$), linear feedback controllers suffer from integrator windup and severe lag. **MPC** excels in this regime due to explicit constraint handling on $\Delta u$.
 3. **Energy vs. Precision Trade-off:**  
-   **NL-PID** proved to be the most energy-frugal controller ($194.42	ext{ mAh}$ avg), making it attractive for lightweight battery-powered devices. However, for cinema-grade stabilization, **LQG** achieves the optimal balance ($205.57	ext{ mAh}$ with top-tier precision).
+   **NL-PID** proved to be the most energy-frugal controller ($194.42\text{ mAh}$ avg), making it attractive for lightweight battery-powered devices. However, for cinema-grade stabilization, **LQG** achieves the optimal balance ($205.57\text{ mAh}$ with top-tier precision).
 4. **Neural Network Controller Limitations:**  
    While neural architectures (NARMA-L2, MRC) adapt well to nonlinearities, they exhibited the highest current draw and battery drain in closed-loop regulation without delivering sufficient tracking precision over LQG/MPC.
 
@@ -483,5 +488,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ---
 
 <div align="center">
-  <sub>Developed with passion for robotics & cinematography by <b>Paweł  Tymiński</b> • Warsaw University of Technology</sub>
+  <sub>Developed with passion for robotics & cinematography by <b>Paweł Tymiński</b> • Warsaw University of Technology</sub>
 </div>
