@@ -1,0 +1,27 @@
+# MATLAB & Simulink artifacts
+*.asv
+*.slxc
+slprj/
+*.autosave
+*.mex*
+*.mat.bak
+*.m~
+
+# SolidWorks temporary files
+~$*.*
+*.bak
+*.tmp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Python & IDE
+__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.idea/
