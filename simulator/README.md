@@ -62,8 +62,50 @@ x_m, ẋ_m, ẍ_m, ruch podstawy ─► dynamika Newtona-Eulera (tab. 5) ─► 
 * Dodatkowo: tryby podążania (yaw / FPV), programy wartości zadanej, szum i rozdzielczość czujnika,
   niewyważenie kamery i skala masy, regulator hybrydowy (inny regulator w każdej osi — kierunek z „Dalszych planów” pracy).
 
-Model prądu jest przybliżeniem (prąd spoczynkowy + moment / K_t), więc wartości mAh służą do porównań
-między regulatorami, a nie do odtworzenia liczb z tab. 6.
+### Energia — metoda z pracy
+
+Domyślnie energia liczona jest dokładnie tak jak w bloku `current_calc` modeli Simulink (`src/models/*.slx`,
+identyczny we wszystkich modelach):
+
+```
+Q  = D(θ)·ε + H(θ, Ω) + G(IMU, θ)          blok "gimbal_inverted" — funkcje calculate_D/H/G_matrix.m
+I  = 10 · | sat(Q, ±0.34 Nm) |             1/K_t = 10 A/Nm, 0.34 Nm = moment trzymający GB3510
+E  = Σ_osie ∫ I dt   [A·s]                 blok Integrator; w tabelach pracy E[mAh] = A·s / 3.6
+```
+
+θ to pozycje silników [yaw, pitch, roll], Ω i ε ich pochodne (bloki `Derivative`), IMU to orientacja
+globalna kamery. Funkcje `calculate_D/H/G_matrix.m` przeniesiono do JS 1:1
+(`js/core/thesis_dynamics.js`, generowane skryptem `tools/m2js.py`), łącznie z indeksowaniem kolumnowym MATLAB‑a.
+Alternatywnie można wybrać dynamikę Newtona‑Eulera z prądem spoczynkowym I₀.
+
+### Profil „zgodny z modelami Simulink”
+
+Pliki `.slx` miejscami różnią się od opisu w tekście pracy. Ten profil odtwarza je wiernie:
+
+| Element | Opis w pracy | Modele `.slx` |
+|---|---|---|
+| silnik | 1/((0.002s+1)(0.0015s+1)), ogranicznik 560 rpm przed członami | 1/((0.0002s+1)(0.0015s+1)), ogranicznik **18.5 rad/s na wyjściu**, potem nasycenie pitch ±2.35 / roll ±0.78 rad |
+| kinematyka | Rz·Rx·Ry, wzór 2.33 | konwersje kątów **ZYX** |
+| zakłócenia | — | **X → roll**, Y → pitch, Z → yaw, podtrzymanie 100 Hz, bez rozwijania ±180° |
+| PID | nastawy „metodą inżynierską” | równoległy P = 0.495, I = 37, D = 0.000775, N = 100, bez anti‑windupu |
+| NL PID | wzór 3.2 | 0.495·e·\|e\| + 37∫e + 0.000775·ė (e w rad) |
+| LQG | K = [0.0245 0.0246] | K = [0.0045 0.0102] |
+| „MSE” w tabelach | błąd średniokwadratowy | blok `mse_calc`: **J = ∫(x_mn − x_m)² dt** [rad²·s] |
+
+Z tym profilem symulator odtwarza tabele 6–13, np. (pełna długość zestawów):
+
+| Regulator / zestaw | Energia sym. / praca [mAh] | J roll sym. / praca |
+|---|---|---|
+| LQG / 1 | 52.61 / 52.13 | 447.1 / 448.4 |
+| PID / 1 | 50.91 / 50.74 | 858.3 / 858.5 |
+| LQG / 3 | 291.5 / 287.6 | 702.1 / 706.0 |
+| PID / 5 | 244.0 / 238.8 | 905.2 / 905.4 |
+
+Pozostałe różnice (zwykle 1–3 %) wynikają m.in. z solvera: Simulink używa kroku zmiennego
+(`VariableStepAuto`), a symulator stałego kroku 1 ms, co najbardziej wpływa na bloki `Derivative`
+przy skokowych danych (zestaw 4, NL PID). Nastawy MPC są zapisane w sesjach MPC Designer, których nie da się
+odczytać bez MATLAB‑a, więc MPC używa nastaw symulatora. Porównanie z tabelami wypisuje
+`node simulator/tests/reproduce.js 1,2,3 lqg,pid,nlpid`.
 
 ## Struktura
 
@@ -76,13 +118,15 @@ simulator/
 │   ├── params.js         parametry z pracy (tab. 2, 5) i wyniki (tab. 6–14)
 │   ├── motor.js          model silnika GB3510
 │   ├── controllers.js    PID, NL PID, LQG, MPC
-│   ├── dynamics.js       dynamika Newtona-Eulera
+│   ├── thesis_dynamics.js  funkcje D/H/G z pracy (wygenerowane)
+│   ├── dynamics.js       dynamika z pracy + Newtona-Eulera
 │   ├── disturbance.js    źródła zakłóceń
 │   └── engine.js         pętla symulacji, metryki, rejestracja
 ├── js/ui/                wykresy, scena 3D (three.js), widżety, widoki
 ├── data/                 zestawy zakłóceń
 ├── vendor/three.min.js   three.js r158 (MIT)
-└── tests/                testy modelu: node simulator/tests/run.js
+├── tools/m2js.py         transpilacja calculate_D/H/G_matrix.m -> js/core/thesis_dynamics.js
+└── tests/                testy modelu (run.js) i odtworzenie tabel pracy (reproduce.js)
 ```
 
 ## Testy
@@ -93,7 +137,8 @@ node simulator/tests/run.js
 
 Sprawdzają m.in. zgodność macierzy silnika, wzmocnień LQR, biegunów i Nx/Nu z pracą, poprawność
 kinematyki odwrotnej, stabilizację wszystkich regulatorów na zestawie 1, spełnienie ograniczeń MPC
-oraz moment grawitacyjny przy niewyważeniu.
+, moment grawitacyjny przy niewyważeniu oraz odtworzenie energii (tab. 6–9) i J roll (tab. 13)
+dla zestawu 1 w profilu Simulink.
 
 ## Ponowny eksport danych zakłóceń
 
