@@ -50,7 +50,8 @@
   }
 
   /*
-   * opts: { map: {yaw:'X', pitch:'Y', roll:'Z'}, sign: {yaw:1,...}, unwrap: true, zero: true, gain: 1, loop: false }
+   * opts: { map: {yaw:'X', pitch:'Y', roll:'Z'}, sign: {yaw:1,...}, unwrap: true, zero: true, gain: 1, loop: false,
+ *         interp: 'cubic' | 'hold' }
    */
   function DatasetSource(ds, opts) {
     this.ds = ds; this.opts = opts; this.kind = 'dataset';
@@ -75,6 +76,10 @@
     if (this.opts.loop) { x = x % (n - 1); if (x < 0) x += n - 1; }
     if (x <= 0) x = 0; if (x >= n - 1) x = n - 1 - 1e-9;
     var i = Math.floor(x), f = x - i;
+    if (this.opts.interp === 'hold') {          // Simulink From Workspace, Interpolate = off
+      for (var h = 0; h < 3; h++) out[h] = this.series[h][Math.min(n - 1, Math.floor(x + 1e-9))];
+      return out;
+    }
     var i0 = Math.max(0, i - 1), i2 = Math.min(n - 1, i + 1), i3 = Math.min(n - 1, i + 2);
     var f2 = f * f, f3 = f2 * f;
     for (var k = 0; k < 3; k++) {

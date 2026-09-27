@@ -90,4 +90,19 @@ test('dynamics: gravity torque on pitch vanishes for balanced camera and grows w
   close(Math.abs(unb.torques([0, 0, 0], z, z, I3, z, z)[2]), 0.174 * 9.81 * 0.01, 1e-6, 'm g d');
 });
 
+test('Simulink profile reproduces thesis energy (tab. 6-9) and J roll (tab. 13) on dataset 1', () => {
+  const T = GS.THESIS;
+  for (const [c, n] of [['lqg', 'LQG'], ['pid', 'PID']]) {
+    const cfg = GS.defaultConfig(); const opts = GS.applyProfile(cfg, 'simulink'); cfg.controller = c; cfg.recordHz = 1;
+    const src = new GS.Disturbance.DatasetSource(GS.Disturbance.decodeDataset(1), opts);
+    const sim = new GS.Simulation(cfg, src); sim.advance(src.duration); const m = sim.metrics();
+    const rel = (a, b) => Math.abs(a - b) / b;
+    assert.ok(rel(m.mAh, T.energy[n][0]) < 0.03, `${n} energy ${m.mAh} vs ${T.energy[n][0]}`);
+    assert.ok(rel(m.mAhAxis[0], T.energyYaw[n][0]) < 0.03, `${n} yaw energy`);
+    assert.ok(rel(m.mAhAxis[1], T.energyPitch[n][0]) < 0.03, `${n} pitch energy`);
+    assert.ok(rel(m.mAhAxis[2], T.energyRoll[n][0]) < 0.03, `${n} roll energy`);
+    assert.ok(rel(m.J[2], T.mseRoll[n][0]) < 0.01, `${n} J roll ${m.J[2]} vs ${T.mseRoll[n][0]}`);
+  }
+});
+
 console.log(`\n${passed} tests passed`);

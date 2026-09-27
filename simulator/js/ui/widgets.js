@@ -121,7 +121,7 @@
     this.txt.textContent = qDeg.toFixed(1) + '°';
     var c = AX_COL[this.axis];
     this.meta.innerHTML =
-      '<div class="name" style="color:' + c + '">' + this.axis.toUpperCase() + ' <span style="color:#5b6778;font-weight:500">±' + this.limit + '°</span></div>' +
+      '<div class="name" style="color:' + c + '">' + this.axis.toUpperCase() + ' <span style="color:#5b6778;font-weight:500">±' + Math.round(this.limit) + '°</span></div>' +
       'zadana <b>' + reqDeg.toFixed(2) + '°</b><br>ω <b>' + wDeg.toFixed(1) + ' °/s</b><br>M <b>' + tauMNm.toFixed(1) + ' mNm</b><br>I <b>' + curA.toFixed(2) + ' A</b>' +
       '<div class="minibar"><div style="width:' + Math.min(100, curA / 3.4 * 100) + '%;background:' + c + '"></div></div>' +
       '<div class="flags"><span class="flag ' + (sat ? 'on-bad' : '') + '">SAT</span><span class="flag ' + (rl ? 'on-warn' : '') + '">RATE</span></div>';

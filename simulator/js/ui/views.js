@@ -32,6 +32,7 @@
     $('#bench-ds-short').onclick = function () { setDs([1, 4, 7]); };
     $('#bench-ds-none').onclick = function () { setDs([]); };
     bench.W = GS.ui.buildSliders(doc.getElementById('view-bench'), { input: function () { if (bench.results) renderBench(); } });
+    $('#bench-errmetric').onchange = function () { if (bench.results) renderBench(); };
     bench.charts = {
       mse: new GS.BarChart($('#bench-mse')), energy: new GS.BarChart($('#bench-energy')),
       score: new GS.BarChart($('#bench-score')), perds: new GS.BarChart($('#bench-perds'))
@@ -40,11 +41,11 @@
     $('#bench-stop').onclick = function () { bench.stop = true; };
     $('#bench-csv').onclick = function () {
       if (!bench.results) return;
-      var lines = ['controller,dataset,duration_s,mse_yaw,mse_pitch,mse_roll,mse_mean,energy_mAh,energy_yaw,energy_pitch,energy_roll,max_err_deg'];
+      var lines = ['controller,dataset,duration_s,mse_yaw,mse_pitch,mse_roll,mse_mean,J_yaw,J_pitch,J_roll,energy_mAh,energy_yaw,energy_pitch,energy_roll,charge_As,max_err_deg'];
       bench.results.ctrls.forEach(function (c) {
         bench.results.ds.forEach(function (d) {
           var m = bench.results.m[c][d]; if (!m) return;
-          lines.push([CT[c].label, d, m.t.toFixed(2), m.mse[0], m.mse[1], m.mse[2], m.mseMean, m.mAh, m.mAhAxis[0], m.mAhAxis[1], m.mAhAxis[2], Math.max.apply(null, m.maxErr)].join(','));
+          lines.push([CT[c].label, d, m.t.toFixed(2), m.mse[0], m.mse[1], m.mse[2], m.mseMean, m.J[0], m.J[1], m.J[2], m.mAh, m.mAhAxis[0], m.mAhAxis[1], m.mAhAxis[2], m.As, Math.max.apply(null, m.maxErr)].join(','));
         });
       });
       GS.download('gimbalsim_benchmark.csv', lines.join('\n'), 'text/csv');
@@ -58,7 +59,7 @@
     var limit = +$('#bench-limit').value;
     var jobs = [];
     ds.forEach(function (d) { ctrls.forEach(function (c) { jobs.push({ ds: d, c: c }); }); });
-    bench.results = { ds: ds, ctrls: ctrls, m: {} };
+    bench.results = { ds: ds, ctrls: ctrls, m: {}, full: !limit };
     ctrls.forEach(function (c) { bench.results.m[c] = {}; });
     bench.running = true; bench.stop = false;
     $('#bench-run').disabled = true; $('#bench-stop').disabled = false;
@@ -116,21 +117,29 @@
         rate: avg(function (m) { return Math.max.apply(null, m.ratePct); })
       };
       r.mse = (r.mseY + r.mseP + r.mseR) / 3;
-      r.score = (W.energy * r.mAh + W.yaw * r.mseY + W.pitch * r.mseP + W.roll * r.mseR) / sumW;
+      r.jY = avg(function (m) { return m.J[0]; }); r.jP = avg(function (m) { return m.J[1]; }); r.jR = avg(function (m) { return m.J[2]; });
+      var useJ = $('#bench-errmetric').value === 'J';
+      r.score = (W.energy * r.mAh + W.yaw * (useJ ? r.jY : r.mseY) + W.pitch * (useJ ? r.jP : r.mseP) + W.roll * (useJ ? r.jR : r.mseR)) / sumW;
+      // thesis reference for the same datasets (tables 6 and 13), when the full datasets were simulated
+      var tn = { pid: 'PID', nlpid: 'NL PID', lqg: 'LQG', mpc: 'MPC' }[c];
+      var dsDone = R.ds.filter(function (d) { return R.m[c][d]; });
+      r.thE = R.full && tn ? dsDone.reduce(function (s2, d) { return s2 + GS.THESIS.energy[tn][d - 1]; }, 0) / dsDone.length : NaN;
+      r.thJR = R.full && tn ? dsDone.reduce(function (s2, d) { return s2 + GS.THESIS.mseRoll[tn][d - 1]; }, 0) / dsDone.length : NaN;
       return r;
     }).filter(Boolean);
     if (!rows.length) return;
     var sorted = rows.slice().sort(function (a, b) { return a.score - b.score; });
     rows.forEach(function (r) { r.rank = sorted.indexOf(r) + 1; });
-    var cols = [['mseY', 'MSE yaw'], ['mseP', 'MSE pitch'], ['mseR', 'MSE roll'], ['mse', 'MSE śr.'], ['mAh', 'Energia [mAh]'], ['eY', 'E yaw'], ['eP', 'E pitch'], ['eR', 'E roll'], ['maxE', 'max |e| [°]'], ['rate', 'ogr. ω [%]'], ['score', 'Wynik']];
+    var cols = [['mseY', 'MSE yaw'], ['mseP', 'MSE pitch'], ['mseR', 'MSE roll'], ['jY', 'J yaw'], ['jP', 'J pitch'], ['jR', 'J roll'], ['thJR', 'J roll praca'], ['mAh', 'Energia [mAh]'], ['thE', 'E praca'], ['eY', 'E yaw'], ['eP', 'E pitch'], ['eR', 'E roll'], ['maxE', 'max |e| [°]'], ['score', 'Wynik']];
     var best = {}, worst = {};
-    cols.forEach(function (c) { var v = rows.map(function (r) { return r[c[0]]; }); best[c[0]] = Math.min.apply(null, v); worst[c[0]] = Math.max.apply(null, v); });
+    cols.forEach(function (c) { var v = rows.map(function (r) { return r[c[0]]; }).filter(isFinite); best[c[0]] = Math.min.apply(null, v); worst[c[0]] = Math.max.apply(null, v); });
     var h = '<thead><tr><th>Regulator</th><th>n</th>' + cols.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '<th>Miejsce</th></tr></thead><tbody>';
     rows.forEach(function (r) {
       h += '<tr><td><span class="swatch" style="background:' + CT[r.c].color + '"></span>' + CT[r.c].label + '</td><td>' + r.n + '</td>' +
         cols.map(function (c) {
-          var v = r[c[0]], cls = rows.length > 1 && v === best[c[0]] ? 'best' : rows.length > 1 && v === worst[c[0]] ? 'worst' : '';
-          return '<td class="' + cls + '">' + GS.fmtVal(v) + '</td>';
+          var v = r[c[0]], ref = c[0].indexOf('th') === 0;
+          var cls = ref ? 'muted' : rows.length > 1 && v === best[c[0]] ? 'best' : rows.length > 1 && v === worst[c[0]] ? 'worst' : '';
+          return '<td class="' + cls + '">' + (isFinite(v) ? GS.fmtVal(v) : '—') + '</td>';
         }).join('') + '<td><span class="rank' + (r.rank === 1 ? ' r1' : '') + '">' + r.rank + '</span></td></tr>';
     });
     $('#bench-table').innerHTML = h + '</tbody>';
@@ -140,11 +149,13 @@
     bench.charts.score.set({ labels: true, groups: rows.map(function (r) { return CT[r.c].label; }), series: [{ values: rows.map(function (r) { return r.score; }), colors: colors }] });
     bench.charts.perds.set({ log: true, groups: R.ds.map(String), series: rows.map(function (r) { return { label: CT[r.c].label, color: CT[r.c].color, values: R.ds.map(function (d) { var m = R.m[r.c][d]; return m ? m.mseMean : NaN; }) }; }) });
     // detail
-    var d = '<thead><tr><th>Zestaw</th><th>Regulator</th><th>t [s]</th><th>MSE yaw</th><th>MSE pitch</th><th>MSE roll</th><th>MSE śr.</th><th>Energia [mAh]</th><th>max |e| [°]</th></tr></thead><tbody>';
+    var d = '<thead><tr><th>Zestaw</th><th>Regulator</th><th>t [s]</th><th>MSE yaw</th><th>MSE pitch</th><th>MSE roll</th><th>J yaw</th><th>J pitch</th><th>J roll</th><th>Energia [mAh]</th><th>E praca [mAh]</th><th>max |e| [°]</th></tr></thead><tbody>';
     R.ds.forEach(function (ds) {
       R.ctrls.forEach(function (c) {
         var m = R.m[c][ds]; if (!m) return;
-        d += '<tr><td>' + ds + '</td><td><span class="swatch" style="background:' + CT[c].color + '"></span>' + CT[c].label + '</td><td>' + m.t.toFixed(1) + '</td><td>' + GS.fmtVal(m.mse[0]) + '</td><td>' + GS.fmtVal(m.mse[1]) + '</td><td>' + GS.fmtVal(m.mse[2]) + '</td><td>' + GS.fmtVal(m.mseMean) + '</td><td>' + m.mAh.toFixed(2) + '</td><td>' + Math.max.apply(null, m.maxErr).toFixed(3) + '</td></tr>';
+        var tn = { pid: 'PID', nlpid: 'NL PID', lqg: 'LQG', mpc: 'MPC' }[c];
+        var thE = R.full && tn ? GS.THESIS.energy[tn][ds - 1].toFixed(2) : '—';
+        d += '<tr><td>' + ds + '</td><td><span class="swatch" style="background:' + CT[c].color + '"></span>' + CT[c].label + '</td><td>' + m.t.toFixed(1) + '</td><td>' + GS.fmtVal(m.mse[0]) + '</td><td>' + GS.fmtVal(m.mse[1]) + '</td><td>' + GS.fmtVal(m.mse[2]) + '</td><td>' + GS.fmtVal(m.J[0]) + '</td><td>' + GS.fmtVal(m.J[1]) + '</td><td>' + GS.fmtVal(m.J[2]) + '</td><td>' + m.mAh.toFixed(2) + '</td><td class="muted">' + thE + '</td><td>' + Math.max.apply(null, m.maxErr).toFixed(3) + '</td></tr>';
       });
     });
     $('#bench-detail').innerHTML = d + '</tbody>';

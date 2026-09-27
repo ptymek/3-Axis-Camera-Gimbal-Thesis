@@ -51,6 +51,7 @@
             <label><input type="checkbox" id="ds-unwrap" checked> Rozwijaj skoki ±180°</label>
             <label><input type="checkbox" id="ds-zero" checked> Zeruj pozycję początkową</label>
             <label><input type="checkbox" id="ds-loop"> Zapętl</label>
+            <label><input type="checkbox" id="ds-hold"> Podtrzymanie próbek 100 Hz (jak Simulink)</label>
           </div>
           <div class="slider" data-id="ds-gain" data-label="Skala zakłócenia" data-min="0" data-max="2" data-step="0.05" data-value="1" data-unit="×"></div>
         </div>
@@ -123,17 +124,31 @@
     </section>
 
     <section class="card collapsed" data-collapsible>
-      <h3><span class="idx">04</span>Model obiektu</h3>
+      <h3><span class="idx">04</span>Model obiektu i energia</h3>
       <div class="body">
+        <label class="field"><span>Profil modelu</span>
+          <select id="mdl-profile">
+            <option value="thesis">Zgodny z opisem w pracy (rozdz. 2–5)</option>
+            <option value="simulink">Zgodny z modelami Simulink (src/models/*.slx)</option>
+          </select>
+        </label>
+        <div class="hint" id="mdl-profile-hint"></div>
+        <label class="field"><span>Metoda obliczania energii</span>
+          <select id="mdl-energy">
+            <option value="simulink">Jak w pracy: ∫|I|dt, I = 10·|sat(Q, ±0.34 Nm)|, Q = D·ε + H + G</option>
+            <option value="rnea">Newton-Euler z ruchem podstawy + prąd spoczynkowy I₀</option>
+          </select>
+        </label>
+        <label class="checks"><label><input type="checkbox" id="mdl-zero"> Start silników z pozycji 0 (warunki początkowe Simulinka)</label></label>
         <div class="slider" data-id="mdl-payload" data-label="Masa kamery (skala)" data-min="0.5" data-max="2" data-step="0.05" data-value="1" data-unit="×"></div>
         <div class="slider" data-id="mdl-imbx" data-label="Niewyważenie X (przód)" data-min="-20" data-max="20" data-step="0.5" data-value="0" data-unit="mm"></div>
         <div class="slider" data-id="mdl-imbz" data-label="Niewyważenie Z (dół)" data-min="-20" data-max="20" data-step="0.5" data-value="0" data-unit="mm"></div>
         <div class="slider" data-id="mdl-rpm" data-label="Prędkość znamionowa silnika" data-min="100" data-max="1200" data-step="10" data-value="560" data-unit="rpm"></div>
-        <div class="slider" data-id="mdl-i0" data-label="Prąd spoczynkowy / oś" data-min="0" data-max="1" data-step="0.01" data-value="0.25" data-unit="A"></div>
+        <div class="slider" data-id="mdl-i0" data-label="Prąd spoczynkowy / oś (tylko Newton-Euler)" data-min="0" data-max="1" data-step="0.01" data-value="0.25" data-unit="A"></div>
         <div class="slider" data-id="mdl-noise" data-label="Szum pomiaru pozycji (σ)" data-min="0" data-max="0.5" data-step="0.005" data-value="0" data-unit="°"></div>
         <div class="slider" data-id="mdl-res" data-label="Rozdzielczość czujnika" data-min="0" data-max="0.5" data-step="0.005" data-value="0" data-unit="°"></div>
         <div class="slider" data-id="mdl-batt" data-label="Pojemność akumulatora" data-min="500" data-max="5000" data-step="50" data-value="2000" data-unit="mAh"></div>
-        <div class="hint">Zmiana parametrów modelu restartuje symulację. Ograniczenia pozycji silników (rozdz. 5): yaw ±360°, pitch ±135°, roll ±45°.</div>
+        <div class="hint">Zmiana profilu, prędkości silnika lub metody energii restartuje symulację. Ograniczenia pozycji silników (rozdz. 5): yaw ±360°, pitch ±135°, roll ±45°.</div>
       </div>
     </section>
   </aside>
@@ -236,7 +251,10 @@
           <div class="slider" data-id="w-yaw" data-label="MSE yaw" data-min="0" data-max="1" data-step="0.05" data-value="0.6"></div>
           <div class="slider" data-id="w-pitch" data-label="MSE pitch" data-min="0" data-max="1" data-step="0.05" data-value="0.5"></div>
           <div class="slider" data-id="w-roll" data-label="MSE roll" data-min="0" data-max="1" data-step="0.05" data-value="0.2"></div>
-          <div class="hint">Wynik = Σ wᵢ·xᵢ / Σ wᵢ (średnia ważona jak w pracy, mniejszy = lepszy).</div>
+          <label class="field"><span>Wskaźnik błędu w wyniku</span>
+            <select id="bench-errmetric"><option value="J">J = ∫(x_mn − x_m)² dt [rad²·s] — jak tabele pracy</option><option value="mse">MSE orientacji kamery [deg²]</option></select>
+          </label>
+          <div class="hint">Wynik = Σ wᵢ·xᵢ / Σ wᵢ (średnia ważona jak w pracy, mniejszy = lepszy). Kolumny „praca” pokazują średnie z tab. 6 i 13 dla tych samych zestawów (tylko przy pełnej długości zestawów).</div>
         </div>
       </section>
       <div class="btnrow big">
@@ -315,7 +333,9 @@
       <h3><span class="idx">DYN</span>Dynamika i parametry masowe (tab. 5)</h3>
       <div class="body">
         <div class="eq">Q = D(θ)·ε + H(θ, Ω) + G(θ) &nbsp;(2.12) — algorytm Newtona-Eulera z ruchem podstawy</div>
-        <div class="eq">I<sub>silnika</sub> = I₀ + |Q + b·ω| / K<sub>t</sub>, &nbsp; K<sub>t</sub> = 0.1 Nm/A, b = 0.001 Nm·s/rad</div>
+        <div class="eq">Energia (blok <code>current_calc</code>): I<sub>i</sub> = 10·|sat(Q<sub>i</sub>, ±0.34 Nm)|, &nbsp; E = Σ<sub>i</sub> ∫ I<sub>i</sub> dt [A·s] / 3.6 → mAh</div>
+        <div class="eq">Q z <code>calculate_D/H/G_matrix.m</code>: θ = [yaw, pitch, roll] silników, Ω, ε = pochodne θ, IMU = orientacja globalna kamery</div>
+        <div class="eq">Wariant alternatywny: I = I₀ + |Q<sub>N-E</sub> + b·ω| / K<sub>t</sub>, &nbsp; K<sub>t</sub> = 0.1 Nm/A, b = 0.001 Nm·s/rad</div>
         <div class="table-wrap"><table class="data compact" id="plant-table"></table></div>
       </div>
     </div>
@@ -385,7 +405,8 @@
     <ul>
       <li>Regulatory oparte na sieciach neuronowych (NARMA-L2, MRC) nie są zaimplementowane — ich wyniki z pracy są dostępne tylko w zakładce „Wyniki pracy”.</li>
       <li>Nastawy PID/NL PID nie są podane w pracy liczbowo (dobór „metodą inżynierską”) — wartości domyślne dobrano testem skokowym; LQG używa wag Q = diag(10⁴, 10⁴), R = 10⁴ oraz filtru Kalmana Q = 30000, R = 0.01 (rozdz. 5.3). Ciągłe K wyznaczone w symulatorze ≈ [0.0245 0.0246], jak w pracy.</li>
-      <li>Model prądu (I₀ + |moment|/K<sub>t</sub>) jest przybliżeniem; wartości mAh są porównywalne względnie między regulatorami, nie absolutnie z tab. 6.</li>
+      <li>Energia domyślnie liczona jest dokładnie jak w bloku <code>current_calc</code> modeli Simulink: moment każdej osi Q = D(θ)·ε + H(θ, Ω) + G(IMU, θ) z przeniesionych 1:1 funkcji <code>calculate_D/H/G_matrix.m</code>, nasycenie ±0.34 Nm (moment trzymający GB3510), I = 10·|Q| (1/K<sub>t</sub>), całka ∫I dt w A·s, w tabelach pracy podana jako mAh = A·s / 3.6. Alternatywnie można użyć dynamiki Newtona-Eulera z prądem spoczynkowym.</li>
+      <li>Profil „Zgodny z modelami Simulink” odtwarza pliki <code>.slx</code>, które miejscami różnią się od opisu w pracy: silnik 1/((0.0002s+1)(0.0015s+1)) z ogranicznikiem 18.5 rad/s na wyjściu, konwersje kątów ZYX, dane X → roll, Y → pitch, Z → yaw z podtrzymaniem 100 Hz, PID P = 0.495, I = 37, D = 0.000775, N = 100 bez anti-windupu, NL PID 0.495·e|e| + 37∫e + 0.000775·ė, LQG K = [0.0045 0.0102], start silników z 0. Tabele „MSE” pracy to w modelu całka ∫(x<sub>mn</sub> − x<sub>m</sub>)² dt [rad²·s] (blok <code>mse_calc</code>) — symulator pokazuje ją jako „wskaźnik z pracy J”. Z tym profilem energia i J odtwarzają tab. 6–13 z dokładnością zwykle kilku procent (różnice: solver o zmiennym kroku w Simulinku).</li>
       <li>Mapowanie osi danych z telefonu (X — azymut, Y — pochylenie, Z — przechylenie) można zmienić; skoki ±180° azymutu są domyślnie rozwijane (w pracy takie przeskoki opisano jako przyczynę dużych wartości MSE osi roll — rozdz. 6).</li>
       <li>Zestaw 4 zapisano z krokiem ok. 0.1 s; tak jak w pracy (<code>timeseries_creation.m</code>) wszystkie zestawy odtwarzane są z krokiem 0.01 s, więc zestaw 4 przebiega ok. 10× szybciej niż w rzeczywistości.</li>
     </ul>
@@ -397,6 +418,7 @@
 <script src="js/core/params.js"></script>
 <script src="js/core/motor.js"></script>
 <script src="js/core/controllers.js"></script>
+<script src="js/core/thesis_dynamics.js"></script>
 <script src="js/core/dynamics.js"></script>
 <script src="js/core/disturbance.js"></script>
 <script src="js/core/engine.js"></script>

@@ -30,10 +30,12 @@
   // G(s) = 1 / ((T1 s + 1)(T2 s + 1)), T1 = 0.002 s, T2 = 0.0015 s (calculate_I_matrix.m)
   GS.defaultMotor = function () {
     return {
-      T1: 0.002, T2: 0.0015,
+      T1: 0.002, T2: 0.0015,       // design model (LQG / MPC)
+      plantT1: 0.002, plantT2: 0.0015, rateAfter: false, rateRad: null,   // simulated plant (see motor.js)
       nomRpm: 560,                 // nominal speed -> rate limit of position changes
       Kt: 0.1,                     // torque constant [Nm/A]
       Imax: 3.4,                   // max current [A]
+      holdTorque: 0.34,            // holding torque [Nm] = saturation in Simulink current_calc
       I0: [0.25, 0.25, 0.25],      // quiescent (FOC holding) current per axis [A]
       viscous: 0.001,              // t_d from calculate_Q_matrix.m [Nm s/rad]
       voltage: 12,                 // supply [V]

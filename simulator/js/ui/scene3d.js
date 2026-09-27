@@ -374,9 +374,10 @@
     if (!st) return;
     var m4 = this._m4;
     setQ(this.base, st.Rb, m4);
-    this.yawG.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), st.q.yaw);
-    this.rollG.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), st.q.roll);
-    this.pitchG.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), st.q.pitch);
+    var qv = st.qVis || st.q;       // equivalent yaw-roll-pitch pose (differs from motor angles for ZYX kinematics)
+    this.yawG.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), qv.yaw);
+    this.rollG.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), qv.roll);
+    this.pitchG.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), qv.pitch);
     setQ(this.ghost, GS.rot.eulerZYX(st.ref[0], st.ref[1], st.ref[2]), m4);
     var led = this.cam.userData.led; if (led) led.visible = (Math.floor(st.t * 2) % 2) === 0;
   };

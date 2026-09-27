@@ -61,5 +61,43 @@
     return tau;
   };
 
+  /*
+   * Thesis inverse dynamics exactly as in the Simulink block "gimbal_inverted":
+   *   Q = calculate_D_matrix(THETA)*ACC + calculate_H_matrix(THETA, Omega) + calculate_G_matrix(IMU, THETA)
+   * with THETA = [yaw; pitch; roll] motor positions and IMU = global camera [yaw; pitch; roll].
+   * Inputs are built like calculate_I_matrix.m (4x4 pseudo-inertia matrices, DIS = [x; y; z],
+   * DIM = [l_1; b_1; h_3]) and passed with MATLAB column-major linear indexing.
+   */
+  function ThesisDynamics(plant, extra) {
+    var L = plant.links;
+    function colMajor(M) { var o = []; for (var c = 0; c < M[0].length; c++) for (var r2 = 0; r2 < M.length; r2++) o.push(M[r2][c]); return o; }
+    var x = [], y = [], z = [], m = [];
+    L.forEach(function (l, i) {
+      var com = l.com.slice(), mass = l.m;
+      if (i === 2 && extra) { com[0] += extra[0]; com[1] += extra[1]; com[2] += extra[2]; if (extra.massScale) mass *= extra.massScale; }
+      x.push(com[0]); y.push(com[1]); z.push(com[2]); m.push(mass);
+    });
+    this.I = L.map(function (l, i) {
+      var I = l.I, mm = m[i];
+      return colMajor([
+        [(-I.xx + I.yy + I.zz) / 2, I.xy, I.xz, mm * x[i]],
+        [I.yx, (I.xx - I.yy + I.zz) / 2, I.yz, mm * y[i]],
+        [I.zx, I.zy, (I.xx + I.yy - I.zz) / 2, mm * z[i]],
+        [mm * x[i], mm * y[i], mm * z[i], mm]
+      ]);
+    });
+    this.M = m;
+    this.DIM = [plant.dims.L1, plant.dims.B1, plant.dims.H3];      // l_1 = gimbal(15), b_1 = gimbal(14), h_3 = gimbal(17)
+    this.DIS = colMajor([x, y, z]);
+  }
+  ThesisDynamics.prototype.torques = function (theta, omega, acc, imu) {
+    var T = GS.thesisDyn, I = this.I;
+    var D = T.D(theta, I[0], I[1], I[2], this.DIM);
+    var H = T.H(theta, omega, I[0], I[1], I[2], this.DIM);
+    var G = T.G(imu, theta, this.DIM, this.M, this.DIS);
+    return [0, 1, 2].map(function (k) { return D[k][0] * acc[0] + D[k][1] * acc[1] + D[k][2] * acc[2] + H[k] + G[k]; });
+  };
+
   GS.Dynamics = Dynamics;
+  GS.ThesisDynamics = ThesisDynamics;
 })(typeof window !== 'undefined' ? window : globalThis);

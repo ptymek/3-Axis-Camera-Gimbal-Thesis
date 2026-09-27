@@ -12,7 +12,8 @@
     source: null, sim: null,
     running: false, speed: 1, finished: false,
     win: 5, axes: { Yaw: true, Pitch: true, Roll: true },
-    dsOpts: { map: { yaw: 'X', pitch: 'Y', roll: 'Z' }, sign: { yaw: 1, pitch: 1, roll: 1 }, unwrap: true, zero: true, gain: 1, loop: false },
+    dsOpts: { map: { yaw: 'X', pitch: 'Y', roll: 'Z' }, sign: { yaw: 1, pitch: 1, roll: 1 }, unwrap: true, zero: true, gain: 1, loop: false, interp: 'cubic' },
+    profile: 'thesis',
     synth: { amp: 1, ay: 5, fy: 0.5, ap: 8, fp: 1.5, ar: 6, fr: 1, step: 15 },
     battery: 2000,
     busy: false
@@ -214,13 +215,40 @@
       case 'mdl-payload': c.payloadScale = v; if (app.sim) app.sim.rebuildDynamics(); break;
       case 'mdl-imbx': c.imbalance[0] = v; if (app.sim) app.sim.rebuildDynamics(); break;
       case 'mdl-imbz': c.imbalance[2] = v; if (app.sim) app.sim.rebuildDynamics(); break;
-      case 'mdl-rpm': if (final) { c.motor.nomRpm = v; restart(); } break;
+      case 'mdl-rpm': if (final) { c.motor.nomRpm = v; c.motor.rateRad = v * Math.PI / 30; restart(); } break;
       case 'mdl-i0': c.motor.I0 = [v, v, v]; break;
       case 'mdl-noise': c.sensor.noiseDeg = v; break;
       case 'mdl-res': c.sensor.resolutionDeg = v; break;
       case 'mdl-batt': app.battery = v; break;
       default: break;
     }
+  }
+
+  // ------------------------------------------------------------------ model profile
+  var PROFILE_HINT = {
+    thesis: 'Silnik wg rozdz. 2.3 (T₁ = 2 ms, 560 rpm), kinematyka ZXY (wzór 2.33), zakłócenia X→yaw z rozwinięciem ±180°.',
+    simulink: 'Odtworzenie plików .slx: silnik T₁ = 0.2 ms z ogranicznikiem 18.5 rad/s na wyjściu, kinematyka ZYX, X→roll / Y→pitch / Z→yaw, nastawy PID/NL PID/LQG z modeli, start z 0. Energia i J odpowiadają tab. 6–13.'
+  };
+  function applyProfile(name) {
+    app.profile = name;
+    var loop = app.dsOpts.loop;
+    app.dsOpts = GS.applyProfile(app.cfg, name); app.dsOpts.loop = loop;
+    syncModelUI();
+    buildParamUI(); refreshControllerInfo();
+    if (app.srcKey.indexOf('ds:') === 0) rebuildDatasetSource(); else restart();
+  }
+  function syncModelUI() {
+    var c = app.cfg, o = app.dsOpts;
+    $('#mdl-profile').value = app.profile;
+    $('#mdl-profile-hint').textContent = PROFILE_HINT[app.profile];
+    $('#mdl-energy').value = c.energyModel;
+    $('#mdl-zero').checked = !!c.startAtZero;
+    ['yaw', 'pitch', 'roll'].forEach(function (ax) { $('#map-' + ax).value = o.map[ax]; S['ref-' + ax].set(c.reference[ax]); });
+    $('#ds-unwrap').checked = o.unwrap; $('#ds-zero').checked = o.zero; $('#ds-hold').checked = o.interp === 'hold';
+    $('#ref-mode').value = c.mode; $('#ref-program').value = c.refProgram;
+    var rate = c.motor.rateRad != null ? c.motor.rateRad : c.motor.nomRpm * Math.PI / 30;
+    S['mdl-rpm'].set(Math.round(rate * 30 / Math.PI));
+    $('#dials').innerHTML = ''; buildDials();
   }
 
   // ------------------------------------------------------------------ HUD / KPI
@@ -230,7 +258,9 @@
     var defs = [
       ['mseYaw', 'MSE yaw', 'deg²', 'yaw'], ['msePitch', 'MSE pitch', 'deg²', 'pitch'],
       ['mseRoll', 'MSE roll', 'deg²', 'roll'], ['mseMean', 'MSE średnie', 'deg²'],
-      ['energy', 'Energia', 'mAh'], ['current', 'Prąd chwilowy', 'A'],
+      ['jYaw', 'J yaw (praca)', 'rad²s', 'yaw'], ['jPitch', 'J pitch (praca)', 'rad²s', 'pitch'],
+      ['jRoll', 'J roll (praca)', 'rad²s', 'roll'], ['energy', 'Energia', 'mAh'],
+      ['current', 'Prąd chwilowy', 'A'],
       ['power', 'Moc (12 V)', 'W'], ['maxErr', 'Maks. |błąd|', '°'],
       ['sat', 'Nasycenie pozycji', '%'], ['rate', 'Ogr. prędkości', '%'],
       ['battery', 'Akumulator', '', null, true]
@@ -279,7 +309,8 @@
     setK('msePitch', GS.fmtVal(m.mse[1]), 'RMSE ' + GS.fmtVal(m.rmse[1]) + '°');
     setK('mseRoll', GS.fmtVal(m.mse[2]), 'RMSE ' + GS.fmtVal(m.rmse[2]) + '°');
     setK('mseMean', GS.fmtVal(m.mseMean), 'średnia 3 osi (tab. 10)');
-    setK('energy', m.mAh.toFixed(m.mAh < 10 ? 3 : 2), 'Y ' + m.mAhAxis[0].toFixed(2) + ' · P ' + m.mAhAxis[1].toFixed(2) + ' · R ' + m.mAhAxis[2].toFixed(2));
+    setK('energy', m.mAh.toFixed(m.mAh < 10 ? 3 : 2), '∫|I|dt = ' + m.As.toFixed(2) + ' A·s · Y ' + m.mAhAxis[0].toFixed(2) + ' · P ' + m.mAhAxis[1].toFixed(2) + ' · R ' + m.mAhAxis[2].toFixed(2));
+    ['jYaw', 'jPitch', 'jRoll'].forEach(function (k, i) { setK(k, GS.fmtVal(m.J[i]), '∫(x_mn − x_m)² dt'); });
     var Itot = st.I[0] + st.I[1] + st.I[2];
     setK('current', Itot.toFixed(3), 'Y ' + st.I[0].toFixed(2) + ' · P ' + st.I[1].toFixed(2) + ' · R ' + st.I[2].toFixed(2));
     var avgI = st.t > 0 ? m.mAh * 3.6 / st.t : Itot;
@@ -330,7 +361,7 @@
       { title: 'Prędkość silników', unit: '°/s', series: axSeries('w'), minSpan: 1, hlines: [{ v: 560 * 6, color: '#fbbf24' }, { v: -560 * 6, color: '#fbbf24' }] },
       { title: 'Moment silników', unit: 'mNm', series: axSeries('t'), minSpan: 0.1 },
       { title: 'Prąd silników', unit: 'A', series: axSeries('i', null, [{ ch: 'iTot', label: 'Σ', color: '#e2e8f0' }]), minSpan: 0.1, zeroBased: true },
-      { title: 'Błąd MSE (narastająco)', unit: 'deg²', series: axSeries('mse'), minSpan: 1e-6, zeroBased: true },
+      { title: 'Wskaźnik z pracy J = ∫(x_mn − x_m)² dt', unit: 'rad²s', series: axSeries('j'), minSpan: 1e-6, zeroBased: true },
       { title: 'Zużyta energia', unit: 'mAh', series: [{ ch: 'mAh', label: 'Σ', color: '#38bdf8', width: 1.8 }], minSpan: 1e-3, zeroBased: true }
     ];
     var grid = $('#chart-grid');
@@ -396,12 +427,17 @@
     buildSourceSelect();
     buildControllerUI();
     buildKPIs(); buildDials(); buildCharts();
+    syncModelUI();
 
     ['yaw', 'pitch', 'roll'].forEach(function (ax) {
       $('#map-' + ax).addEventListener('change', function (e) { app.dsOpts.map[ax] = e.target.value; rebuildDatasetSource(); });
     });
     $('#ds-unwrap').addEventListener('change', function (e) { app.dsOpts.unwrap = e.target.checked; rebuildDatasetSource(); });
     $('#ds-zero').addEventListener('change', function (e) { app.dsOpts.zero = e.target.checked; rebuildDatasetSource(); });
+    $('#ds-hold').addEventListener('change', function (e) { app.dsOpts.interp = e.target.checked ? 'hold' : 'cubic'; rebuildDatasetSource(); });
+    $('#mdl-profile').addEventListener('change', function (e) { applyProfile(e.target.value); });
+    $('#mdl-energy').addEventListener('change', function (e) { app.cfg.energyModel = e.target.value; restart(); });
+    $('#mdl-zero').addEventListener('change', function (e) { app.cfg.startAtZero = e.target.checked; restart(); });
     $('#ds-loop').addEventListener('change', function (e) { app.dsOpts.loop = e.target.checked; if (app.source && app.source.opts) app.source.opts.loop = e.target.checked; });
     $('#ref-mode').addEventListener('change', function (e) { app.cfg.mode = e.target.value; if (app.sim) app.sim.baseFollow = app.sim.base.slice(); });
     $('#ref-program').addEventListener('change', function (e) { app.cfg.refProgram = e.target.value; });

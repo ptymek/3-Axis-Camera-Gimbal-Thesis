@@ -25,7 +25,8 @@
     'tYaw', 'tPitch', 'tRoll',          // motor torque [mNm]
     'iYaw', 'iPitch', 'iRoll', 'iTot',  // current [A]
     'mAh',                              // cumulated charge [mAh]
-    'mseYaw', 'msePitch', 'mseRoll'     // running MSE [deg^2]
+    'mseYaw', 'msePitch', 'mseRoll',    // running MSE [deg^2]
+    'jYaw', 'jPitch', 'jRoll'           // thesis index int (x_mn - x_m)^2 dt [rad^2 s]
   ];
 
   function Recorder(capacity) {
@@ -83,8 +84,36 @@
       plant: GS.defaultPlant(),
       imbalance: [0, 0, 0],                              // extra camera COM offset [mm]
       payloadScale: 1,
-      mseSkip: 0
+      mseSkip: 0,
+      kinematics: 'ZXY',                                 // ZXY (thesis text, eq. 2.33) | ZYX (Simulink models)
+      energyModel: 'simulink',                           // simulink (current_calc, thesis) | rnea (Newton-Euler + I0)
+      startAtZero: false                                 // motors start at 0 (Simulink initial conditions)
     };
+  };
+
+  /*
+   * Model profiles.
+   *   'thesis'   — as described in the thesis text (default of this simulator)
+   *   'simulink' — reproduces src/models/*.slx: motor 1/(0.0002s+1)(0.0015s+1) with an 18.5 rad/s
+   *                rate limiter on the output, ZYX angle conversions, disturbance X -> roll, Y -> pitch,
+   *                Z -> yaw held at 100 Hz, no unwrapping, PID / NL PID / LQG gains from the models.
+   * Returns the dataset options to use with this profile.
+   */
+  GS.applyProfile = function (cfg, name) {
+    var d = GS.defaultConfig();
+    cfg.motor = d.motor; cfg.kinematics = d.kinematics; cfg.yawShortest = d.yawShortest;
+    ['pid', 'nlpid', 'lqg'].forEach(function (k) { cfg.params[k] = GS.defaultControllerParams(k); });
+    cfg.reference = { yaw: 0, pitch: -45, roll: 0 }; cfg.mode = 'lock'; cfg.refProgram = 'static';
+    cfg.energyModel = 'simulink'; cfg.startAtZero = false;
+    if (name === 'simulink') {
+      cfg.startAtZero = true;
+      cfg.motor.plantT1 = 0.0002; cfg.motor.plantT2 = 0.0015; cfg.motor.rateAfter = true; cfg.motor.rateRad = 18.5;
+      cfg.motor.limitsDeg = { yaw: 360, pitch: 2.35 * R2D, roll: 0.78 * R2D };
+      cfg.kinematics = 'ZYX'; cfg.yawShortest = false;
+      Object.keys(GS.SIMULINK_PARAMS).forEach(function (k) { Object.assign(cfg.params[k], GS.SIMULINK_PARAMS[k]); });
+      return { map: { yaw: 'Z', pitch: 'Y', roll: 'X' }, sign: { yaw: 1, pitch: 1, roll: 1 }, unwrap: false, zero: false, gain: 1, loop: false, interp: 'hold' };
+    }
+    return { map: { yaw: 'X', pitch: 'Y', roll: 'Z' }, sign: { yaw: 1, pitch: 1, roll: 1 }, unwrap: true, zero: true, gain: 1, loop: false, interp: 'cubic' };
   };
 
   function Simulation(cfg, source) {
@@ -104,15 +133,14 @@
       var ctx = { dt: dt, limit: lim, rateMax: self.motors[ax].rateMax, motorCfg: mc };
       self.ctrls[ax] = GS.CONTROLLERS[type].create(cfg.params[type], ctx);
     });
-    var im = cfg.imbalance || [0, 0, 0];
-    var extra = [im[0] / 1000, im[1] / 1000, im[2] / 1000]; extra.massScale = cfg.payloadScale || 1;
-    this.dyn = new GS.Dynamics(cfg.plant, extra);
+    this.rebuildDynamics();
   };
   Simulation.prototype.reset = function () {
     var cfg = this.cfg;
     this.t = 0; this.k = 0; this.rec.clear();
     this.rng = rngSeed(12345);
-    this.sumSq = [0, 0, 0]; this.nSq = 0; this.mAh = 0; this.mAhAxis = [0, 0, 0];
+    this.sumSq = [0, 0, 0]; this.nSq = 0; this.mAh = 0; this.mAhAxis = [0, 0, 0]; this.intSq = [0, 0, 0];
+    this.qHist = null;
     this.maxErr = [0, 0, 0]; this.satCount = [0, 0, 0]; this.rateCount = [0, 0, 0];
     this.wf = [0, 0, 0]; this.af = [0, 0, 0];
     var b = this.source.sample(0, [0, 0, 0]);
@@ -122,7 +150,7 @@
     var req = this.required(this.Rb, this.refNow, null);
     var self = this;
     GS.AXES.forEach(function (ax, i) {
-      self.motors[ax].reset(r.clamp(req[i], -self.motors[ax].limit, self.motors[ax].limit));
+      self.motors[ax].reset(cfg.startAtZero ? 0 : r.clamp(req[i], -self.motors[ax].limit, self.motors[ax].limit));
       self.ctrls[ax].reset(self.motors[ax].q);
     });
     this.state = null;
@@ -147,7 +175,9 @@
   // required motor positions (display order yaw, pitch, roll) from inverse kinematics
   Simulation.prototype.required = function (Rb, ref, qPrevYaw) {
     var RG = r.eulerZYX(ref[0], ref[1], ref[2]);
-    var q = r.ikZXY(r.mul(r.T(Rb), RG));            // [yaw, roll, pitch]
+    var Rrel = r.mul(r.T(Rb), RG), q;
+    if (this.cfg.kinematics === 'ZYX') { var e = r.toEulerZYX(Rrel); q = [e[0], e[2], e[1]]; }   // Simulink: ZYX conversions
+    else q = r.ikZXY(Rrel);                           // [yaw, roll, pitch]
     var yaw = q[0];
     if (this.cfg.yawShortest && qPrevYaw != null) {
       yaw = qPrevYaw + r.wrapPi(yaw - qPrevYaw);
@@ -199,19 +229,38 @@
   Simulation.prototype.update = function (req, u, record) {
     var cfg = this.cfg, dt = cfg.dt, M = this.motors;
     var q = [M.yaw.q, M.roll.q, M.pitch.q], qd = [M.yaw.qd, M.roll.qd, M.pitch.qd], qdd = [M.yaw.qdd, M.roll.qdd, M.pitch.qdd];
-    var Rj = r.jointsR(q[0], q[1], q[2]);
+    var zyx = cfg.kinematics === 'ZYX';
+    var Rj = zyx ? r.eulerZYX(M.yaw.q, M.pitch.q, M.roll.q) : r.jointsR(q[0], q[1], q[2]);
     var Rc = r.mul(this.Rb, Rj);
     var cam = r.toEulerZYX(Rc);
     var ref = this.refNow;
     var e = [r.wrapPi(ref[0] - cam[0]), r.wrapPi(ref[1] - cam[1]), r.wrapPi(ref[2] - cam[2])];
-    // inverse dynamics -> torques (chain order yaw, roll, pitch)
-    var tau = this.dyn.torques(q, qd, qdd, this.Rb, this.wf, this.af);
-    var mc = cfg.motor;
-    var tauM = [tau[0] + mc.viscous * qd[0], tau[2] + mc.viscous * qd[2], tau[1] + mc.viscous * qd[1]];  // yaw, pitch, roll
-    var I = tauM.map(function (tq, i) { return Math.min(mc.Imax, mc.I0[i] + Math.abs(tq) / mc.Kt); });
+    // pose of the physical yaw-roll-pitch gimbal that realises the same camera orientation (3D view)
+    var qVis;
+    if (zyx) { var v = r.ikZXY(Rj); qVis = { yaw: v[0], roll: v[1], pitch: v[2] }; }
+    else qVis = { yaw: M.yaw.q, pitch: M.pitch.q, roll: M.roll.q };
+    var mc = cfg.motor, tauM, I, i;
+    var qy = [M.yaw.q, M.pitch.q, M.roll.q];                                   // yaw, pitch, roll
+    if (cfg.energyModel === 'simulink') {
+      /* Simulink "current_calc": Q from gimbal_inverted (D*ACC + H + G), speeds and accelerations
+       * from Derivative blocks of the motor positions, IMU = global camera angles;
+       * per axis  I = 10 * |sat(Q, +-0.34 Nm)|  (10 A/Nm = 1/Kt, 0.34 Nm = holding torque),
+       * charge = int I dt [A s], reported in the thesis tables as mAh = A s / 3.6. */
+      var h = this.qHist, w, a;
+      if (!h) { w = [0, 0, 0]; a = [0, 0, 0]; }
+      else { w = qy.map(function (v, k) { return (v - h.q[k]) / dt; }); a = w.map(function (v, k) { return (v - h.w[k]) / dt; }); }
+      this.qHist = { q: qy, w: w };
+      tauM = this.tdyn.torques(qy, w, a, cam);
+      I = tauM.map(function (tq) { var ts = Math.max(-mc.holdTorque, Math.min(mc.holdTorque, tq)); return Math.abs(ts) / mc.Kt; });
+    } else {
+      // inverse dynamics -> torques (chain order yaw, roll, pitch)
+      var tau = this.dyn.torques(q, qd, qdd, this.Rb, this.wf, this.af);
+      tauM = [tau[0] + mc.viscous * qd[0], tau[2] + mc.viscous * qd[2], tau[1] + mc.viscous * qd[1]];  // yaw, pitch, roll
+      I = tauM.map(function (tq, k) { return Math.min(mc.Imax, mc.I0[k] + Math.abs(tq) / mc.Kt); });
+    }
     var first = this.state === null;
     if (!first) {
-      for (var i = 0; i < 3; i++) { this.mAhAxis[i] += I[i] * dt / 3.6; }
+      for (i = 0; i < 3; i++) { this.mAhAxis[i] += I[i] * dt / 3.6; var em = req[i] - qy[i]; this.intSq[i] += em * em * dt; }
       this.mAh = this.mAhAxis[0] + this.mAhAxis[1] + this.mAhAxis[2];
       if (this.t >= cfg.mseSkip) {
         for (i = 0; i < 3; i++) { var ed = e[i] * R2D; this.sumSq[i] += ed * ed; this.maxErr[i] = Math.max(this.maxErr[i], Math.abs(ed)); }
@@ -221,7 +270,7 @@
     var mse = this.nSq ? this.sumSq.map(function (s) { return s / this.nSq; }, this) : [0, 0, 0];
     this.state = {
       t: this.t, base: this.base.slice(), ref: ref.slice(), cam: cam, err: e, req: req,
-      q: { yaw: M.yaw.q, pitch: M.pitch.q, roll: M.roll.q },
+      q: { yaw: M.yaw.q, pitch: M.pitch.q, roll: M.roll.q }, qVis: qVis, J: this.intSq.slice(),
       qd: [M.yaw.qd, M.pitch.qd, M.roll.qd], u: u, tau: tauM, I: I, mAh: this.mAh, mse: mse, Rb: this.Rb, Rc: Rc,
       sat: [M.yaw.saturated, M.pitch.saturated, M.roll.saturated], rl: [M.yaw.rateLimited, M.pitch.rateLimited, M.roll.rateLimited]
     };
@@ -240,7 +289,8 @@
         tYaw: tauM[0] * 1000, tPitch: tauM[1] * 1000, tRoll: tauM[2] * 1000,
         iYaw: I[0], iPitch: I[1], iRoll: I[2], iTot: I[0] + I[1] + I[2],
         mAh: this.mAh,
-        mseYaw: mse[0], msePitch: mse[1], mseRoll: mse[2]
+        mseYaw: mse[0], msePitch: mse[1], mseRoll: mse[2],
+        jYaw: this.intSq[0], jPitch: this.intSq[1], jRoll: this.intSq[2]
       });
     }
   };
@@ -260,6 +310,7 @@
     var cfg = this.cfg, im = cfg.imbalance || [0, 0, 0];
     var extra = [im[0] / 1000, im[1] / 1000, im[2] / 1000]; extra.massScale = cfg.payloadScale || 1;
     this.dyn = new GS.Dynamics(cfg.plant, extra);
+    this.tdyn = new GS.ThesisDynamics(cfg.plant, extra);
   };
   Simulation.prototype.metrics = function () {
     var mse = this.nSq ? this.sumSq.map(function (s) { return s / this.nSq; }, this) : [0, 0, 0];
@@ -267,7 +318,8 @@
     return {
       t: this.t, mse: mse, mseMean: (mse[0] + mse[1] + mse[2]) / 3,
       rmse: mse.map(Math.sqrt), maxErr: this.maxErr.slice(),
-      mAh: this.mAh, mAhAxis: this.mAhAxis.slice(),
+      mAh: this.mAh, mAhAxis: this.mAhAxis.slice(), J: this.intSq.slice(),
+      As: this.mAh * 3.6,
       satPct: this.satCount.map(function (c) { return 100 * c / n; }),
       ratePct: this.rateCount.map(function (c) { return 100 * c / n; })
     };

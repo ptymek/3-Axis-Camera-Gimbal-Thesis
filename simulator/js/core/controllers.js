@@ -33,18 +33,22 @@
       var e0 = p.e0 * Math.PI / 180, en = e / e0;       // e0: non-linearity threshold (|e| = e0 -> gain 1)
       P = kp * e0 * en * Math.abs(en);
     } else P = kp * e;
-    // filtered derivative (first-order filter, N)
+    // filtered derivative, Simulink convention: D*s * N/(s+N)  ->  first-order filter Tf = 1/N
     var de = this.first ? 0 : (e - this.eprev) / dt;
     this.first = false; this.eprev = e;
-    var Tf = p.Td > 0 ? p.Td / Math.max(1, p.N) : 0;
+    var Tf = p.Td > 0 && p.N > 0 ? 1 / p.N : 0;
     this.df = Tf > 0 ? this.df + (dt / (Tf + dt)) * (de - this.df) : de;
     var D = kp * p.Td * this.df;
     var Iinc = p.Ti > 0 ? kp * dt / p.Ti * e : 0;
-    var lim = this.ctx.limit * 1.02;
-    var uUnsat = P + this.i + Iinc + D;
-    // conditional integration anti-windup
-    if (!(uUnsat > lim && e > 0) && !(uUnsat < -lim && e < 0)) this.i += Iinc;
-    var u = clamp(P + this.i + D, -lim, lim);
+    var lim = this.ctx.limit * 1.02, u;
+    if (p.aw === false) {                       // Simulink PID block: no anti-windup, unlimited output
+      this.i += Iinc; u = P + this.i + D;
+    } else {
+      var uUnsat = P + this.i + Iinc + D;
+      // conditional integration anti-windup
+      if (!(uUnsat > lim && e > 0) && !(uUnsat < -lim && e < 0)) this.i += Iinc;
+      u = clamp(P + this.i + D, -lim, lim);
+    }
     this.terms = [P, this.i, D];
     this.u = u;
     return u;
@@ -59,6 +63,7 @@
     var d = la.c2d(ss.A, ss.B, dt), Ad = d.Ad, Bd = d.Bd, C = ss.C;
     var Q = [[p.q1, 0], [0, p.q2]], R = [[p.r]];
     var lq = la.dare(Ad, Bd, Q, R), K = lq.K;                         // 1x2
+    if (p.simK) K = [[0.0045, 0.0102]];                               // gain hard-coded in src/models/LQR.slx
     // continuous LQR (for comparison with the thesis K = [0.0245 0.0246])
     var Kc = null;
     try { Kc = lqrContinuous(ss.A, ss.B, Q, R); } catch (e) { Kc = null; }
@@ -284,21 +289,23 @@
     pid: {
       label: 'PID', color: '#fbbf24', desc: 'Klasyczny regulator PID (baza porównawcza), nastawy metodą inżynierską.',
       params: [
-        { key: 'kp', label: 'k_p', min: 0, max: 5, step: 0.01, def: 1.2 },
-        { key: 'Ti', label: 'T_i [s]', min: 0.0005, max: 0.1, step: 0.0005, def: 0.004 },
-        { key: 'Td', label: 'T_d [s]', min: 0, max: 0.005, step: 0.0001, def: 0.0005 },
-        { key: 'N', label: 'N (filtr D)', min: 1, max: 100, step: 1, def: 10 }
+        { key: 'kp', label: 'k_p', min: 0, max: 5, step: 0.001, def: 1.2 },
+        { key: 'Ti', label: 'T_i [s]', min: 0.0005, max: 0.1, step: 0.0001, def: 0.004 },
+        { key: 'Td', label: 'T_d [s]', min: 0, max: 0.005, step: 0.00001, def: 0.0005 },
+        { key: 'N', label: 'N filtr D [1/s]', min: 10, max: 100000, step: 1, def: 20000, log: true },
+        { key: 'aw', label: 'Anti-windup i ograniczenie wyjścia', type: 'bool', def: true }
       ],
       create: function (p, ctx) { return new PID(p, ctx, false); }
     },
     nlpid: {
       label: 'NL PID', color: '#fb7185', desc: 'Nieliniowy PID — uchyb w torze P podniesiony do kwadratu: e·|e| (wzór 3.2).',
       params: [
-        { key: 'kp', label: 'k_p', min: 0, max: 5, step: 0.01, def: 1.2 },
-        { key: 'Ti', label: 'T_i [s]', min: 0.0005, max: 0.1, step: 0.0005, def: 0.004 },
-        { key: 'Td', label: 'T_d [s]', min: 0, max: 0.005, step: 0.0001, def: 0.0005 },
-        { key: 'N', label: 'N (filtr D)', min: 1, max: 100, step: 1, def: 10 },
-        { key: 'e0', label: 'ε₀ próg [°]', min: 0.05, max: 10, step: 0.05, def: 1 }
+        { key: 'kp', label: 'k_p', min: 0, max: 5, step: 0.001, def: 1.2 },
+        { key: 'Ti', label: 'T_i [s]', min: 0.0005, max: 0.1, step: 0.0001, def: 0.004 },
+        { key: 'Td', label: 'T_d [s]', min: 0, max: 0.005, step: 0.00001, def: 0.0005 },
+        { key: 'N', label: 'N filtr D [1/s]', min: 10, max: 100000, step: 1, def: 20000, log: true },
+        { key: 'e0', label: 'ε₀ próg [°]', min: 0.05, max: 60, step: 0.05, def: 1 },
+        { key: 'aw', label: 'Anti-windup i ograniczenie wyjścia', type: 'bool', def: true }
       ],
       create: function (p, ctx) { return new PID(p, ctx, true); }
     },
@@ -309,7 +316,8 @@
         { key: 'q2', label: 'Q₂₂', min: 1, max: 1e6, step: 1, def: 10000, log: true },
         { key: 'r', label: 'R', min: 1e-2, max: 1e6, step: 0.01, def: 10000, log: true },
         { key: 'qn', label: 'Kalman Q (proces)', min: 1, max: 1e6, step: 1, def: 30000, log: true },
-        { key: 'rn', label: 'Kalman R (pomiar)', min: 1e-5, max: 10, step: 1e-5, def: 0.01, log: true }
+        { key: 'rn', label: 'Kalman R (pomiar)', min: 1e-5, max: 10, step: 1e-5, def: 0.01, log: true },
+        { key: 'simK', label: 'K z modelu LQR.slx [0.0045 0.0102]', type: 'bool', def: false }
       ],
       create: function (p, ctx) { return new LQG(p, ctx); }
     },
@@ -333,6 +341,13 @@
     }
   };
   GS.CONTROLLER_ORDER = ['pid', 'nlpid', 'lqg', 'mpc', 'direct'];
+  // parameters read from the Simulink models (PID.slx: parallel P = 0.495, I = 37, D = 0.000775, N = 100;
+  // NL_PID.slx: 0.495*e|e| + 37*int(e) + 0.000775*de/dt with e in rad; LQR.slx: K = [0.0045 0.0102])
+  GS.SIMULINK_PARAMS = {
+    pid: { kp: 0.495, Ti: 0.495 / 37, Td: 0.000775 / 0.495, N: 100, aw: false },
+    nlpid: { kp: 0.495, Ti: 0.495 / 37, Td: 0.000775 / 0.495, N: 100000, e0: 180 / Math.PI, aw: false },
+    lqg: { simK: true }
+  };
   GS.defaultControllerParams = function (type) {
     var o = {};
     GS.CONTROLLERS[type].params.forEach(function (d) { o[d.key] = d.def; });
