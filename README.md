@@ -37,6 +37,7 @@
 - [Key Findings & Scientific Insights](#-key-findings--scientific-insights)
 - [Repository Structure](#-repository-structure)
 - [Getting Started & How to Run](#-getting-started--how-to-run)
+- [Interactive GUI Simulator (GimbalSim)](#-interactive-gui-simulator-gimbalsim)
 - [3D CAD Models & Simscape Integration](#-3d-cad-models--simscape-integration)
 - [Future Roadmap](#-future-roadmap)
 - [References & Bibliography](#-references--bibliography)
@@ -389,6 +390,13 @@ Below is the aggregate performance summary compiled across all **60 simulation r
 │       ├── motor_ident/           # BLDC neural identification training data
 │       └── mpc_sessions/          # Saved MATLAB MPC Designer configurations
 │
+├── simulator/                     # Browser GUI simulator (3D model, PID / NL-PID / LQG / MPC)
+│   ├── index.html                 # Open in a browser — no installation needed
+│   ├── js/core/                   # Kinematics, motor, controllers, dynamics, simulation engine
+│   ├── js/ui/                     # 3D scene (three.js), charts, views
+│   ├── data/                      # 10 real disturbance recordings exported from src/data
+│   └── tests/run.js               # Model tests (Node.js)
+│
 ├── results/                       # Experimental results & benchmark data
 │   ├── SIM_RESULTS.xlsx           # Master Excel spreadsheet with all 60 test results
 │   ├── MSE.xlsx / current.xlsx    # Detailed per-axis MSE and current tables
@@ -448,6 +456,21 @@ Below is the aggregate performance summary compiled across all **60 simulation r
    % computes MSE and mAh, and updates results
    run('src/scripts/automation_results.m');
    ```
+
+---
+
+## 🕹️ Interactive GUI Simulator (GimbalSim)
+
+The [`simulator/`](simulator/) folder contains a complete browser-based simulator of the stabiliser — no MATLAB required.
+Open **`simulator/index.html`** in a browser (works directly from disk).
+
+- **3D model** of the 3-axis GoPro gimbal (dimensions B1/L1/H1 from the thesis, GB3510-style motors) with a live camera POV view.
+- **Controllers:** PID, non-linear PID, LQG (LQR + Kalman filter, gains identical to chapter 5.3) and constrained MPC — tunable live, per-axis hybrid mode. Neural-network controllers are intentionally not implemented.
+- **Disturbances:** the 10 real MATLAB Mobile recordings from `src/data/disturbances`, synthetic profiles (walk, run, car, boat, sine, steps) and manual control.
+- **Live analysis:** camera orientation vs. reference, motor positions vs. required positions, error, control signal, motor speed, torque, current, cumulative MSE and energy (mAh), battery estimate.
+- **Benchmark view** (MSE / energy / weighted score as in Table 14), **model & tuning view** (step tests, LQG/MPC design), **thesis results view** (Tables 6–14 and the plot gallery).
+
+See [`simulator/README.md`](simulator/README.md) for details. Model tests: `node simulator/tests/run.js`.
 
 ---
 

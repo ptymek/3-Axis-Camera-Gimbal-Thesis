@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GimbalSim — symulator stabilizatora 3-osiowego</title>
+<meta name="description" content="Symulator pracy 3-osiowego stabilizatora kamery GoPro: model 3D, regulatory PID / NL PID / LQG / MPC, rzeczywiste dane zakłóceń, MSE i zużycie energii.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2"/><ellipse cx="16" cy="16" rx="13" ry="5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".7"/><ellipse cx="16" cy="16" rx="5" ry="13" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".7"/><rect x="12" y="12.5" width="8" height="7" rx="1.2" fill="currentColor"/></svg>
+    <div>
+      <div class="brand-title">GIMBAL<span>SIM</span></div>
+      <div class="brand-sub">3-osiowy stabilizator kamery GoPro · symulator układu regulacji</div>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="sim">Symulacja</button>
+    <button class="tab" data-view="bench">Porównanie regulatorów</button>
+    <button class="tab" data-view="model">Model i strojenie</button>
+    <button class="tab" data-view="thesis">Wyniki pracy</button>
+    <button class="tab" data-view="help">Opis</button>
+  </nav>
+  <div class="status">
+    <div class="chip"><span class="dot" id="st-dot"></span><span id="st-state">STOP</span></div>
+    <div class="chip mono" title="Czas symulacji"><span class="lbl">t</span><span id="st-time">0.000 s</span></div>
+    <div class="chip mono" title="Współczynnik czasu rzeczywistego"><span class="lbl">RT</span><span id="st-rt">—</span></div>
+    <div class="chip mono" title="Klatki na sekundę"><span class="lbl">FPS</span><span id="st-fps">—</span></div>
+  </div>
+</header>
+
+<!-- ============================== SIMULATION VIEW ============================== -->
+<main class="view active" id="view-sim">
+  <aside class="panel left" id="panel-left">
+    <section class="card" data-collapsible>
+      <h3><span class="idx">01</span>Zakłócenie podstawy</h3>
+      <div class="body">
+        <label class="field"><span>Źródło</span>
+          <select id="src-select"></select>
+        </label>
+        <div id="src-desc" class="hint"></div>
+        <div id="src-dataset-opts">
+          <div class="row3">
+            <label class="field sm"><span>Yaw ←</span><select id="map-yaw"><option>X</option><option>Y</option><option>Z</option></select></label>
+            <label class="field sm"><span>Pitch ←</span><select id="map-pitch"><option>X</option><option selected>Y</option><option>Z</option></select></label>
+            <label class="field sm"><span>Roll ←</span><select id="map-roll"><option>X</option><option>Y</option><option selected>Z</option></select></label>
+          </div>
+          <div class="checks">
+            <label><input type="checkbox" id="ds-unwrap" checked> Rozwijaj skoki ±180°</label>
+            <label><input type="checkbox" id="ds-zero" checked> Zeruj pozycję początkową</label>
+            <label><input type="checkbox" id="ds-loop"> Zapętl</label>
+          </div>
+          <div class="slider" data-id="ds-gain" data-label="Skala zakłócenia" data-min="0" data-max="2" data-step="0.05" data-value="1" data-unit="×"></div>
+        </div>
+        <div id="src-synth-opts" hidden>
+          <div class="slider" data-id="syn-amp" data-label="Intensywność" data-min="0" data-max="3" data-step="0.05" data-value="1" data-unit="×"></div>
+        </div>
+        <div id="src-sine-opts" hidden>
+          <div class="slider" data-id="sin-ay" data-label="Yaw amplituda" data-min="0" data-max="45" data-step="0.5" data-value="5" data-unit="°"></div>
+          <div class="slider" data-id="sin-fy" data-label="Yaw częstotliwość" data-min="0.05" data-max="15" data-step="0.05" data-value="0.5" data-unit="Hz"></div>
+          <div class="slider" data-id="sin-ap" data-label="Pitch amplituda" data-min="0" data-max="45" data-step="0.5" data-value="8" data-unit="°"></div>
+          <div class="slider" data-id="sin-fp" data-label="Pitch częstotliwość" data-min="0.05" data-max="15" data-step="0.05" data-value="1.5" data-unit="Hz"></div>
+          <div class="slider" data-id="sin-ar" data-label="Roll amplituda" data-min="0" data-max="45" data-step="0.5" data-value="6" data-unit="°"></div>
+          <div class="slider" data-id="sin-fr" data-label="Roll częstotliwość" data-min="0.05" data-max="15" data-step="0.05" data-value="1" data-unit="Hz"></div>
+        </div>
+        <div id="src-steps-opts" hidden>
+          <div class="slider" data-id="stp-amp" data-label="Wielkość skoku" data-min="1" data-max="60" data-step="1" data-value="15" data-unit="°"></div>
+        </div>
+        <div id="src-manual-opts" hidden>
+          <div class="slider" data-id="man-yaw" data-label="Yaw podstawy" data-min="-180" data-max="180" data-step="1" data-value="0" data-unit="°"></div>
+          <div class="slider" data-id="man-pitch" data-label="Pitch podstawy" data-min="-60" data-max="60" data-step="1" data-value="0" data-unit="°"></div>
+          <div class="slider" data-id="man-roll" data-label="Roll podstawy" data-min="-60" data-max="60" data-step="1" data-value="0" data-unit="°"></div>
+          <div class="hint">Wskazówka: <kbd>Shift</kbd> + przeciąganie w oknie 3D przechyla podstawę.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" data-collapsible>
+      <h3><span class="idx">02</span>Regulator</h3>
+      <div class="body">
+        <div class="seg" id="ctrl-seg"></div>
+        <label class="checks"><label><input type="checkbox" id="ctrl-hybrid"> Regulator hybrydowy (osobny dla każdej osi)</label></label>
+        <div id="hybrid-opts" class="row3" hidden>
+          <label class="field sm"><span>Yaw</span><select id="hy-yaw"></select></label>
+          <label class="field sm"><span>Pitch</span><select id="hy-pitch"></select></label>
+          <label class="field sm"><span>Roll</span><select id="hy-roll"></select></label>
+          <div class="hint" style="grid-column: 1 / -1">Nastawy danego typu regulatora edytuje się po wybraniu go w przełączniku powyżej.</div>
+        </div>
+        <div id="ctrl-desc" class="hint"></div>
+        <div id="ctrl-params"></div>
+        <div class="btnrow"><button class="btn ghost sm" id="ctrl-defaults">Przywróć nastawy domyślne</button></div>
+        <div id="ctrl-info" class="infobox mono"></div>
+      </div>
+    </section>
+
+    <section class="card" data-collapsible>
+      <h3><span class="idx">03</span>Pozycja zadana kamery</h3>
+      <div class="body">
+        <div class="slider" data-id="ref-yaw" data-label="Yaw zadany" data-min="-180" data-max="180" data-step="1" data-value="0" data-unit="°"></div>
+        <div class="slider" data-id="ref-pitch" data-label="Pitch zadany" data-min="-90" data-max="30" data-step="1" data-value="-45" data-unit="°"></div>
+        <div class="slider" data-id="ref-roll" data-label="Roll zadany" data-min="-40" data-max="40" data-step="1" data-value="0" data-unit="°"></div>
+        <label class="field"><span>Tryb pracy</span>
+          <select id="ref-mode">
+            <option value="lock">Blokada (utrzymanie orientacji globalnej — jak w pracy)</option>
+            <option value="followYaw">Podążanie w osi yaw</option>
+            <option value="follow">Podążanie yaw + pitch (FPV)</option>
+          </select>
+        </label>
+        <label class="field"><span>Program zmian wartości zadanej</span>
+          <select id="ref-program">
+            <option value="static">Stała wartość zadana</option>
+            <option value="pan">Panorama (płynne yaw/pitch)</option>
+            <option value="steps">Sekwencja skoków co 4 s</option>
+          </select>
+        </label>
+        <div class="btnrow">
+          <button class="btn ghost sm" data-preset="thesis">Scenariusz pracy (0, −45°, 0)</button>
+          <button class="btn ghost sm" data-preset="level">Poziomo (0, 0, 0)</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card collapsed" data-collapsible>
+      <h3><span class="idx">04</span>Model obiektu</h3>
+      <div class="body">
+        <div class="slider" data-id="mdl-payload" data-label="Masa kamery (skala)" data-min="0.5" data-max="2" data-step="0.05" data-value="1" data-unit="×"></div>
+        <div class="slider" data-id="mdl-imbx" data-label="Niewyważenie X (przód)" data-min="-20" data-max="20" data-step="0.5" data-value="0" data-unit="mm"></div>
+        <div class="slider" data-id="mdl-imbz" data-label="Niewyważenie Z (dół)" data-min="-20" data-max="20" data-step="0.5" data-value="0" data-unit="mm"></div>
+        <div class="slider" data-id="mdl-rpm" data-label="Prędkość znamionowa silnika" data-min="100" data-max="1200" data-step="10" data-value="560" data-unit="rpm"></div>
+        <div class="slider" data-id="mdl-i0" data-label="Prąd spoczynkowy / oś" data-min="0" data-max="1" data-step="0.01" data-value="0.25" data-unit="A"></div>
+        <div class="slider" data-id="mdl-noise" data-label="Szum pomiaru pozycji (σ)" data-min="0" data-max="0.5" data-step="0.005" data-value="0" data-unit="°"></div>
+        <div class="slider" data-id="mdl-res" data-label="Rozdzielczość czujnika" data-min="0" data-max="0.5" data-step="0.005" data-value="0" data-unit="°"></div>
+        <div class="slider" data-id="mdl-batt" data-label="Pojemność akumulatora" data-min="500" data-max="5000" data-step="50" data-value="2000" data-unit="mAh"></div>
+        <div class="hint">Zmiana parametrów modelu restartuje symulację. Ograniczenia pozycji silników (rozdz. 5): yaw ±360°, pitch ±135°, roll ±45°.</div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="center">
+    <div class="viewport" id="viewport">
+      <canvas id="gl"></canvas>
+      <div class="hud hud-tl" id="hud-orient"></div>
+      <div class="hud hud-tr">
+        <div class="btngroup" id="view-buttons">
+          <button class="btn icon" data-cam="iso" title="Widok izometryczny">ISO</button>
+          <button class="btn icon" data-cam="front" title="Przód">PRZÓD</button>
+          <button class="btn icon" data-cam="side" title="Bok">BOK</button>
+          <button class="btn icon" data-cam="top" title="Góra">GÓRA</button>
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="tg-axes" checked> osie</label>
+          <label><input type="checkbox" id="tg-ghost" checked> zadana</label>
+          <label><input type="checkbox" id="tg-frustum" checked> pole widzenia</label>
+          <label><input type="checkbox" id="tg-horizon" checked> horyzont</label>
+          <label><input type="checkbox" id="tg-pov" checked> podgląd kamery</label>
+        </div>
+      </div>
+      <div class="hud hud-bl" id="hud-motors"></div>
+      <div class="pov" id="pov">
+        <div class="pov-frame">
+          <div class="pov-top"><span class="rec">● REC</span><span id="pov-tc" class="mono">00:00:00</span><span class="mono">4K · 60</span></div>
+          <div class="pov-cross"></div>
+          <div class="pov-bottom mono" id="pov-att"></div>
+        </div>
+        <div class="pov-label">KAMERA · POV</div>
+      </div>
+      <div class="loading" id="loading" hidden><div class="spinner"></div><span>Wczytywanie danych…</span></div>
+    </div>
+    <div class="transport">
+      <button class="btn primary" id="btn-play" title="Start / pauza (spacja)"><svg viewBox="0 0 24 24"><path id="play-icon" d="M7 5v14l12-7z"/></svg><span id="play-label">Start</span></button>
+      <button class="btn" id="btn-step" title="Krok 10 ms">+10 ms</button>
+      <button class="btn" id="btn-reset" title="Reset (R)">Reset</button>
+      <label class="field inline"><span>Prędkość</span>
+        <select id="speed">
+          <option value="0.1">0.1×</option><option value="0.25">0.25×</option><option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option><option value="2">2×</option><option value="5">5×</option>
+          <option value="10">10×</option><option value="max">MAX</option>
+        </select>
+      </label>
+      <div class="progress" id="progress" title="Postęp zestawu danych"><div class="bar" id="progress-bar"></div><span id="progress-txt" class="mono"></span></div>
+      <button class="btn ghost" id="btn-csv" title="Eksport zarejestrowanych przebiegów">CSV ↓</button>
+    </div>
+  </section>
+
+  <aside class="panel right">
+    <section class="card kpis">
+      <h3><span class="idx">KPI</span>Wskaźniki jakości</h3>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </section>
+    <section class="card">
+      <h3><span class="idx">MOT</span>Silniki GB3510</h3>
+      <div id="dials" class="dials"></div>
+    </section>
+  </aside>
+
+  <section class="charts">
+    <div class="charts-bar">
+      <div class="seg sm" id="win-seg">
+        <button data-win="2">2 s</button><button data-win="5" class="active">5 s</button><button data-win="10">10 s</button><button data-win="30">30 s</button><button data-win="120">120 s</button><button data-win="all">całość</button>
+      </div>
+      <div class="axis-toggle" id="axis-toggle">
+        <label class="ax-yaw"><input type="checkbox" data-ax="Yaw" checked> Yaw</label>
+        <label class="ax-pitch"><input type="checkbox" data-ax="Pitch" checked> Pitch</label>
+        <label class="ax-roll"><input type="checkbox" data-ax="Roll" checked> Roll</label>
+      </div>
+      <div class="hint">— linia ciągła: wartość rzeczywista · przerywana: zadana</div>
+    </div>
+    <div class="chart-grid" id="chart-grid"></div>
+  </section>
+</main>
+
+<!-- ============================== BENCHMARK VIEW ============================== -->
+<main class="view" id="view-bench">
+  <div class="bench-layout">
+    <aside class="panel">
+      <section class="card">
+        <h3><span class="idx">01</span>Zakres porównania</h3>
+        <div class="body">
+          <div class="lbl-sm">Zestawy danych (rzeczywiste zakłócenia)</div>
+          <div class="chipset" id="bench-ds"></div>
+          <div class="btnrow"><button class="btn ghost sm" id="bench-ds-all">wszystkie</button><button class="btn ghost sm" id="bench-ds-short">krótkie (1, 4, 7)</button><button class="btn ghost sm" id="bench-ds-none">żaden</button></div>
+          <div class="lbl-sm">Regulatory</div>
+          <div class="chipset" id="bench-ctrl"></div>
+          <label class="field"><span>Limit czasu na zestaw</span>
+            <select id="bench-limit"><option value="0">pełna długość zestawu</option><option value="60" selected>pierwsze 60 s</option><option value="30">pierwsze 30 s</option><option value="120">pierwsze 120 s</option></select>
+          </label>
+          <div class="hint">Porównanie używa bieżących nastaw regulatorów, trybu pracy, wartości zadanej i ustawień zakłóceń z zakładki „Symulacja”.</div>
+        </div>
+      </section>
+      <section class="card">
+        <h3><span class="idx">02</span>Wagi oceny (tab. 14)</h3>
+        <div class="body">
+          <div class="slider" data-id="w-energy" data-label="Energia" data-min="0" data-max="1" data-step="0.05" data-value="0.6"></div>
+          <div class="slider" data-id="w-yaw" data-label="MSE yaw" data-min="0" data-max="1" data-step="0.05" data-value="0.6"></div>
+          <div class="slider" data-id="w-pitch" data-label="MSE pitch" data-min="0" data-max="1" data-step="0.05" data-value="0.5"></div>
+          <div class="slider" data-id="w-roll" data-label="MSE roll" data-min="0" data-max="1" data-step="0.05" data-value="0.2"></div>
+          <div class="hint">Wynik = Σ wᵢ·xᵢ / Σ wᵢ (średnia ważona jak w pracy, mniejszy = lepszy).</div>
+        </div>
+      </section>
+      <div class="btnrow big">
+        <button class="btn primary" id="bench-run">Uruchom porównanie</button>
+        <button class="btn" id="bench-stop" disabled>Przerwij</button>
+      </div>
+      <div class="progress wide" id="bench-progress"><div class="bar" id="bench-bar"></div><span id="bench-txt" class="mono">gotowy</span></div>
+    </aside>
+    <section class="bench-main">
+      <div class="card">
+        <h3><span class="idx">RES</span>Wyniki — średnie z wybranych zestawów <button class="btn ghost sm right" id="bench-csv">CSV ↓</button></h3>
+        <div class="table-wrap"><table class="data" id="bench-table"><tbody><tr><td class="muted">Uruchom porównanie, aby zobaczyć wyniki.</td></tr></tbody></table></div>
+      </div>
+      <div class="bench-charts">
+        <div class="card"><h3>MSE wg osi [deg²] (skala log)</h3><canvas class="barchart" id="bench-mse"></canvas></div>
+        <div class="card"><h3>Zużycie energii [mAh]</h3><canvas class="barchart" id="bench-energy"></canvas></div>
+        <div class="card"><h3>Wynik ważony (mniej = lepiej)</h3><canvas class="barchart" id="bench-score"></canvas></div>
+        <div class="card"><h3>MSE średnie na zestaw [deg²]</h3><canvas class="barchart" id="bench-perds"></canvas></div>
+      </div>
+      <div class="card">
+        <h3><span class="idx">DET</span>Szczegóły na zestaw</h3>
+        <div class="table-wrap"><table class="data compact" id="bench-detail"><tbody><tr><td class="muted">—</td></tr></tbody></table></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============================== MODEL VIEW ============================== -->
+<main class="view" id="view-model">
+  <div class="model-grid">
+    <div class="card span2">
+      <h3><span class="idx">STEP</span>Test skokowy regulatorów (pojedynczy silnik)</h3>
+      <div class="body">
+        <div class="row-inline">
+          <label class="field inline"><span>Oś</span><select id="st-axis"><option value="pitch">pitch (±135°)</option><option value="roll">roll (±45°)</option><option value="yaw">yaw (±360°)</option></select></label>
+          <label class="field inline"><span>Skok</span><select id="st-amp"><option>1</option><option selected>5</option><option>20</option><option>60</option><option>120</option></select><span>°</span></label>
+          <label class="field inline"><span>Horyzont</span><select id="st-hor"><option value="0.05">50 ms</option><option value="0.1" selected>100 ms</option><option value="0.3">300 ms</option><option value="1">1 s</option></select></label>
+          <label class="field inline"><span>Szum σ</span><select id="st-noise"><option value="0" selected>0°</option><option value="0.02">0.02°</option><option value="0.1">0.1°</option></select></label>
+          <button class="btn primary" id="st-run">Symuluj</button>
+        </div>
+        <div class="step-wrap">
+          <canvas id="step-chart" class="linechart"></canvas>
+          <canvas id="step-u-chart" class="linechart short"></canvas>
+        </div>
+        <div class="table-wrap"><table class="data compact" id="step-table"></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="idx">MOT</span>Model silnika (rozdz. 2.3)</h3>
+      <div class="body">
+        <div class="eq">G(s) = 1 / ((T₁s + 1)(T₂s + 1)),&nbsp; T₁ = <b id="m-t1"></b>, T₂ = <b id="m-t2"></b></div>
+        <div class="eq">ω<sub>max</sub> = 560 rpm = <b id="m-wmax"></b> → 1 rad w ≈ 0.017 s (wzór 2.24)</div>
+        <div class="matrix mono" id="m-ss"></div>
+        <canvas id="motor-chart" class="linechart"></canvas>
+        <div class="hint">Odpowiedź na skok 1 rad: z ograniczeniem prędkości i bez (odpowiednik rys. 14).</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="idx">LQG</span>Projekt LQR + filtr Kalmana (rozdz. 5.3)</h3>
+      <div class="body mono" id="lqg-info"></div>
+    </div>
+    <div class="card">
+      <h3><span class="idx">MPC</span>Regulator predykcyjny (rozdz. 5.4)</h3>
+      <div class="body" id="mpc-info"></div>
+    </div>
+    <div class="card">
+      <h3><span class="idx">KIN</span>Kinematyka (rozdz. 2.1, 2.4)</h3>
+      <div class="body">
+        <div class="eq">R<sub>kamera</sub> = R<sub>D</sub> · R<sub>z</sub>(θ<sub>yaw</sub>) · R<sub>x</sub>(θ<sub>roll</sub>) · R<sub>y</sub>(θ<sub>pitch</sub>)</div>
+        <div class="eq">R<sub>D</sub><sup>T</sup> · R<sub>G</sub> = [r<sub>ij</sub>] → θ<sub>yaw</sub> = atan2(−r₁₂, r₂₂), θ<sub>roll</sub> = asin(r₃₂), θ<sub>pitch</sub> = atan2(−r₃₁, r₃₃)</div>
+        <div class="lbl-sm">Bieżąca macierz R<sub>D</sub><sup>T</sup>R<sub>G</sub> (symulacja)</div>
+        <div class="matrix mono" id="kin-live"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="idx">DYN</span>Dynamika i parametry masowe (tab. 5)</h3>
+      <div class="body">
+        <div class="eq">Q = D(θ)·ε + H(θ, Ω) + G(θ) &nbsp;(2.12) — algorytm Newtona-Eulera z ruchem podstawy</div>
+        <div class="eq">I<sub>silnika</sub> = I₀ + |Q + b·ω| / K<sub>t</sub>, &nbsp; K<sub>t</sub> = 0.1 Nm/A, b = 0.001 Nm·s/rad</div>
+        <div class="table-wrap"><table class="data compact" id="plant-table"></table></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================== THESIS VIEW ============================== -->
+<main class="view" id="view-thesis">
+  <div class="thesis-grid">
+    <div class="card span2">
+      <h3><span class="idx">T14</span>Ocena algorytmów sterowania (tabela 14)</h3>
+      <div class="table-wrap"><table class="data" id="th-score"></table></div>
+      <div class="hint">Wyniki z pracy magisterskiej (Simulink, 60 symulacji). Regulatory SSN (NARMA-L2, MRC) pokazano wyłącznie jako dane archiwalne — nie są symulowane w tym narzędziu.</div>
+    </div>
+    <div class="card span2">
+      <h3><span class="idx">T6–13</span>Wyniki na zestaw testowy
+        <select id="th-metric" class="right">
+          <option value="energy">Całkowite zużycie energii [mAh] (tab. 6)</option>
+          <option value="energyYaw">Energia — oś yaw [mAh] (tab. 7)</option>
+          <option value="energyPitch">Energia — oś pitch [mAh] (tab. 8)</option>
+          <option value="energyRoll">Energia — oś roll [mAh] (tab. 9)</option>
+          <option value="mseYaw">MSE — oś yaw [deg²] (tab. 11)</option>
+          <option value="msePitch">MSE — oś pitch [deg²] (tab. 12)</option>
+          <option value="mseRoll">MSE — oś roll [deg²] (tab. 13)</option>
+        </select>
+      </h3>
+      <div class="table-wrap"><table class="data compact" id="th-table"></table></div>
+      <canvas class="barchart" id="th-chart"></canvas>
+    </div>
+    <div class="card span2">
+      <h3><span class="idx">PLT</span>Przebiegi z pracy (results/plots)</h3>
+      <div class="row-inline">
+        <label class="field inline"><span>Regulator</span><select id="pl-ctrl"><option value="LQR">LQG (LQR)</option><option value="MPC">MPC</option><option value="PID">PID</option><option value="NL PID">NL PID</option></select></label>
+        <label class="field inline"><span>Test</span><select id="pl-test"></select></label>
+        <label class="field inline"><span>Przebieg</span><select id="pl-type"><option value="POZYCJA">Pozycja globalna</option><option value="BŁĄD">Błąd</option><option value="SILNIK">Pozycja silników</option><option value="NOWA ZADANA">Nowa zadana</option><option value="STEROWANIE">Sterowanie</option><option value="ZAKŁÓCENIE">Zakłócenie</option></select></label>
+      </div>
+      <div class="plot-frame"><img id="pl-img" alt="Przebieg z pracy"><div id="pl-missing" class="muted" hidden>Brak pliku w repozytorium dla tej kombinacji (lub symulator otwarto poza repozytorium).</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================== HELP VIEW ============================== -->
+<main class="view" id="view-help">
+  <article class="help card">
+    <h2>O symulatorze</h2>
+    <p>GimbalSim odtwarza w przeglądarce model z pracy magisterskiej <i>„Zaawansowane algorytmy sterowania 3-osiowym stabilizatorem do kamer”</i> (P. Tymiński, PW 2020): kinematykę prostą i odwrotną, uproszczony model silnika GB3510 (dwa człony inercyjne + ogranicznik prędkości), dynamikę Newtona-Eulera członów z tab. 5 oraz regulatory PID, nieliniowy PID, LQG i MPC. Zakłócenia to 10 rzeczywistych zapisów orientacji telefonu (MATLAB Mobile, 100 Hz) z <code>src/data/disturbances</code>.</p>
+    <h3>Pętla regulacji</h3>
+    <pre class="diagram mono">
+ zakłócenie podstawy (yaw_d, pitch_d, roll_d) ──┐
+ zadana orientacja kamery (yaw, pitch, roll) ───┴─► kinematyka odwrotna ─► nowa zadana pozycja silników x_mn
+                                                                                │
+        ┌───────────────────────────────────────────────────────────────────────┘
+        ▼
+  regulator (PID / NL PID / LQG / MPC) ─► u ─► silnik: nasycenie ─► ogr. prędkości ─► 1/((T₁s+1)(T₂s+1)) ─► x_m
+        ▲                                                                                          │
+        └──────────────────────────────── pomiar pozycji (szum, rozdzielczość) ◄──────────────────┤
+                                                                                                   ▼
+                  kinematyka prosta: R_kamera = R_D · Rz · Rx · Ry ─► błąd, MSE        dynamika N-E ─► moment ─► prąd ─► mAh</pre>
+    <h3>Obsługa</h3>
+    <ul>
+      <li><kbd>Spacja</kbd> start/pauza, <kbd>R</kbd> reset, <kbd>1</kbd>–<kbd>4</kbd> widoki kamery 3D.</li>
+      <li>Okno 3D: lewy przycisk — obrót, prawy / <kbd>Ctrl</kbd> — przesuwanie, kółko — zoom, <kbd>Shift</kbd> + przeciąganie — ręczne przechylanie podstawy (źródło „Sterowanie ręczne”).</li>
+      <li>Wykresy: najechanie kursorem pokazuje wartości; przełączniki osi i długości okna nad wykresami.</li>
+      <li>„Porównanie regulatorów” uruchamia wsadowo wybrane regulatory na wybranych zestawach i liczy MSE, energię oraz wynik ważony jak w tab. 14.</li>
+    </ul>
+    <h3>Założenia i różnice względem pracy</h3>
+    <ul>
+      <li>Regulatory oparte na sieciach neuronowych (NARMA-L2, MRC) nie są zaimplementowane — ich wyniki z pracy są dostępne tylko w zakładce „Wyniki pracy”.</li>
+      <li>Nastawy PID/NL PID nie są podane w pracy liczbowo (dobór „metodą inżynierską”) — wartości domyślne dobrano testem skokowym; LQG używa wag Q = diag(10⁴, 10⁴), R = 10⁴ oraz filtru Kalmana Q = 30000, R = 0.01 (rozdz. 5.3). Ciągłe K wyznaczone w symulatorze ≈ [0.0245 0.0246], jak w pracy.</li>
+      <li>Model prądu (I₀ + |moment|/K<sub>t</sub>) jest przybliżeniem; wartości mAh są porównywalne względnie między regulatorami, nie absolutnie z tab. 6.</li>
+      <li>Mapowanie osi danych z telefonu (X — azymut, Y — pochylenie, Z — przechylenie) można zmienić; skoki ±180° azymutu są domyślnie rozwijane (w pracy takie przeskoki opisano jako przyczynę dużych wartości MSE osi roll — rozdz. 6).</li>
+      <li>Zestaw 4 zapisano z krokiem ok. 0.1 s; tak jak w pracy (<code>timeseries_creation.m</code>) wszystkie zestawy odtwarzane są z krokiem 0.01 s, więc zestaw 4 przebiega ok. 10× szybciej niż w rzeczywistości.</li>
+    </ul>
+  </article>
+</main>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/core/linalg.js"></script>
+<script src="js/core/params.js"></script>
+<script src="js/core/motor.js"></script>
+<script src="js/core/controllers.js"></script>
+<script src="js/core/dynamics.js"></script>
+<script src="js/core/disturbance.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/ui/scene3d.js"></script>
+<script src="js/ui/widgets.js"></script>
+<script src="js/ui/app.js"></script>
+<script src="js/ui/views.js"></script>
+</body>
+</html>
